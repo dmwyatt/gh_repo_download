@@ -1,0 +1,11 @@
+# {{ repo_name }}
+
+{% for file in files %}
+## {{ file.path }}
+
+```
+{% autoescape off %}
+{{ file.content }}
+{% endautoescape %}
+```
+{% endfor %}
