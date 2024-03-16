@@ -1,34 +1,18 @@
-import asyncio
 import datetime
-import io
 import logging
-import mimetypes
 import os
 import random
-import re
 import tempfile
 import uuid
-import zipfile
-import platform
 
-import httpx
 from django.conf import settings
 from django.contrib import messages
 from django.http import FileResponse
 from django.shortcuts import redirect, render
-from django.template import loader
-import filetype
 
-# if not on windows import python-magic
-if platform.system() != "Windows":
-    import magic
-
-    have_magic = True
-else:
-    have_magic = False
-
-
+from .file_utils import concat_files
 from .forms import RepositoryForm
+from .repo_utils import RepositorySizeExceededError, download_repo, extract_files
 
 logger = logging.getLogger(__name__)
 
@@ -37,149 +21,6 @@ os.makedirs(settings.GENERATED_FILES_DIR, exist_ok=True)
 # Configure the cleanup settings
 CLEANUP_PROBABILITY = 0.2  # Probability of performing cleanup on each view (20% chance)
 CLEANUP_THRESHOLD = 10
-
-
-def is_text_file(file_path):
-    # Check file type using python-magic
-    if have_magic:
-        mime_type = magic.from_file(file_path, mime=True)
-        if not mime_type.startswith("text/"):
-            return False
-
-    # Check file type using filetype library
-    file_type = filetype.guess(file_path)
-    if file_type is None or not file_type.mime.startswith("text/"):
-        return False
-
-    # Check MIME type using mimetypes
-    mime_type, _ = mimetypes.guess_type(file_path)
-    if mime_type is None or not mime_type.startswith("text/"):
-        return False
-
-    # Check the number of lines in the text file
-    with open(file_path, "r", encoding="utf-8") as file:
-        num_lines = sum(1 for _ in file)
-        if num_lines > settings.MAX_TEXT_FILE_LINES:
-            return False
-
-    return True
-
-
-def is_safe_filename(filename):
-    # Allowed characters in the filename
-    allowed_chars = re.compile(r"^[a-zA-Z0-9_\-.]+$")
-
-    # Check if the filename is empty
-    if not filename:
-        return False
-
-    # Check if the filename exceeds the maximum length
-    if len(filename) > settings.MAX_FILENAME_LENGTH:
-        return False
-
-    # Check if the filename contains only allowed characters
-    if not allowed_chars.match(filename):
-        return False
-
-    # Check if the filename starts with a dot or hyphen
-    if filename.startswith(".") or filename.startswith("-"):
-        return False
-
-    # Check if the filename contains consecutive dots or hyphens
-    if ".." in filename or "--" in filename:
-        return False
-
-    # Check if the filename ends with a dot or hyphen
-    if filename.endswith(".") or filename.endswith("-"):
-        return False
-
-    # Additional checks for specific file extensions
-    # Example: Restrict certain file extensions
-    restricted_extensions = settings.RESTRICTED_FILE_EXTENSIONS
-    _, extension = os.path.splitext(filename)
-    if extension.lower() in restricted_extensions:
-        return False
-
-    return True
-
-
-class RepositorySizeExceededError(Exception):
-    pass
-
-
-async def download_repo(repo_url):
-    async with httpx.AsyncClient(follow_redirects=True) as client:
-        url = repo_url + "/archive/master.zip"
-        logger.info(f"Downloading repository from URL: {url}")
-        try:
-            response = await client.get(url, headers={"Accept-Encoding": "identity"})
-            response.raise_for_status()
-
-            content_length = response.headers.get("Content-Length")
-            if content_length and int(content_length) > settings.MAX_REPO_SIZE:
-                raise RepositorySizeExceededError(
-                    f"Repository size exceeds the maximum allowed size: {content_length} bytes"
-                )
-
-            content = bytearray()
-            async for chunk in response.aiter_bytes():
-                content.extend(chunk)
-                if len(content) > settings.MAX_REPO_SIZE:
-                    raise RepositorySizeExceededError(
-                        f"Repository size exceeds the maximum allowed size: {len(content)} bytes"
-                    )
-
-            logger.info(f"Downloaded {len(content)} bytes from {url}")
-            try:
-                zip_file = zipfile.ZipFile(io.BytesIO(content))
-                logger.info(f"Successfully extracted zip file from {url}")
-                return zip_file
-            except zipfile.BadZipFile:
-                logger.error(f"Invalid zip file content from {url}")
-                logger.debug(f"Content: {content}")
-                return None
-        except httpx.HTTPError as e:
-            logger.error(f"HTTP error occurred while downloading from {url}: {str(e)}")
-            raise
-
-
-async def extract_files(zip_file, temp_dir):
-    loop = asyncio.get_event_loop()
-    extracted_dir = await loop.run_in_executor(
-        None, lambda: zip_file.namelist()[0].split("/")[0]
-    )
-    extraction_path = os.path.join(temp_dir, extracted_dir)
-    await loop.run_in_executor(None, lambda: zip_file.extractall(path=temp_dir))
-    return extraction_path
-
-
-def concat_files(extracted_dir, repo_name, output_file_path):
-    template = loader.get_template("repo_template.md")
-    files = []
-    for root, dirs, filenames in os.walk(extracted_dir):
-        for filename in filenames:
-            file_path = os.path.join(root, filename)
-            if not is_safe_filename(filename):
-                logger.warning(f"Skipping file with unsafe filename: {file_path}")
-                continue
-            if is_text_file(file_path):
-                with open(file_path, "r", encoding="utf-8") as file:
-                    content = file.read().strip()
-                    files.append(
-                        {
-                            "path": os.path.relpath(file_path, extracted_dir),
-                            "content": content,
-                        }
-                    )
-                    logger.info(f"Processing file: {file_path}")
-                    logger.debug(f"File content: {content}")
-            else:
-                logger.warning(f"Skipping non-text file: {file_path}")
-
-    context = {"repo_name": repo_name, "files": files}
-    output_content = template.render(context)
-    with open(output_file_path, "w", encoding="utf-8") as outfile:
-        outfile.write(output_content)
 
 
 async def download_repo_view(request):
