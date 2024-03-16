@@ -1,4 +1,5 @@
-
+filetype
+python-magic; sys_platform != 'win32'
 Django
 django-environ
 httpx

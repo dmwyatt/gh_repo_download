@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Download Repository</title>
+</head>
+<body>
+    <h1>{{ repo_name }}</h1>
+    <p>Generated file: <a href="{% url 'download_file' output_file %}">{{ output_file }}</a></p>
+    <p>File size: {{ file_size }} bytes</p>
+    <p>Number of files: {{ file_count }}</p>
+    <!-- Add any other interesting information -->
+</body>
+</html>

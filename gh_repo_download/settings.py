@@ -17,6 +17,7 @@ from environ import Env
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = Env()
+Env.read_env(BASE_DIR / ".env")
 
 
 # Quick-start development settings - unsuitable for production
@@ -40,7 +41,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "downloader.apps.DownloaderConfig"
+    "downloader.apps.DownloaderConfig",
 ]
 
 MIDDLEWARE = [
@@ -58,8 +59,7 @@ ROOT_URLCONF = "gh_repo_download.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / 'templates']
-        ,
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -129,25 +129,34 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
         },
     },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': 'INFO',
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
         },
-        'downloader.views': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': True,
+        "downloader.views": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": True,
         },
     },
 }
 
-# 10 MB
 MAX_REPO_SIZE = 10 * 1024 * 1024
+MAX_TEXT_FILE_LINES = 2000
+MAX_FILENAME_LENGTH = 255
+RESTRICTED_FILE_EXTENSIONS = ['.exe', '.bat', '.sh', '.dll', '.so']
+
+if DEBUG:
+    GENERATED_FILES_DIR = BASE_DIR / "generated_files"
+else:
+    GENERATED_FILES_DIR = (
+        BASE_DIR.parent / env("GENERATED_FILES_DIR", default="../generated_files")
+    ).resolve()
