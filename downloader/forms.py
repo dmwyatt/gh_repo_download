@@ -10,6 +10,6 @@ def validate_repo_url(value):
 
 
 class RepositoryForm(forms.Form):
-    repo_url = forms.URLField(label='GitHub Repository URL')
+    repo_url = forms.URLField(label='GitHub Repository URL', validators=[validate_repo_url])
 
 
