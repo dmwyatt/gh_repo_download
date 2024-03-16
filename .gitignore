@@ -1,3 +1,4 @@
 .idea
 *.sqlite3
 requirements.txt
+.env
