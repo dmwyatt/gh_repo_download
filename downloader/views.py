@@ -50,7 +50,7 @@ async def download_repo_view(request):
                     extracted_dir = await extract_files(zip_file, temp_dir)
 
                     # Generate a unique filename for the output file
-                    output_filename = f"{repo_name}_{uuid.uuid4().hex}.md"
+                    output_filename = f"{repo_name}_{uuid.uuid4().hex}.txt"
                     output_file = os.path.join(
                         settings.GENERATED_FILES_DIR, output_filename
                     )
