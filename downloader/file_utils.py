@@ -67,7 +67,7 @@ def is_safe_filename(filename):
 
 
 def concat_files(extracted_dir, repo_name, output_file_path):
-    template = loader.get_template("repo_template.md")
+    template = loader.get_template("repo_template.txt")
     files = []
     for root, dirs, filenames in os.walk(extracted_dir):
         for filename in filenames:

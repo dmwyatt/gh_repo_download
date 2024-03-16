@@ -1,0 +1,12 @@
+>>>>>>>>>>>>>
+>> GITHUB REPO: {{ repo_name }}
+>>>>>>>>>>>>>
+
+{% for file in files %}
+>>>>>>>>>>>>>
+>> {{ file_path }}
+>>>>>>>>>>>>>
+{% autoescape off %}
+{{ file.content }}
+{% endautoescape %}
+{% endfor %}
