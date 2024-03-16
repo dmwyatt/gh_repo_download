@@ -4,7 +4,7 @@
 
 {% for file in files %}
 >>>>>>>>>>>>>
->> {{ file_path }}
+>> {{ file.path }}
 >>>>>>>>>>>>>
 {% autoescape off %}
 {{ file.content }}
