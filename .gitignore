@@ -2,3 +2,4 @@
 *.sqlite3
 requirements.txt
 .env
+generated_files/
