@@ -55,7 +55,7 @@ async def download_repo_view(request):
                         settings.GENERATED_FILES_DIR, output_filename
                     )
 
-                    # Concatenate all files into a single .md file
+                    # Concatenate all files into a single file
                     concat_files(extracted_dir, repo_name, output_file)
                     file_size = os.path.getsize(output_file)
                     file_count = sum(
