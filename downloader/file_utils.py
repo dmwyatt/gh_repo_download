@@ -1,11 +1,11 @@
+import logging
 import os
 import re
 
 from django.conf import settings
 from django.template import loader
 
-from downloader.views import logger
-
+logger = logging.getLogger(__name__)
 
 def is_plain_text_file(file_path):
     allow_list = list(range(9, 11)) + list(range(13, 14)) + list(range(32, 256))

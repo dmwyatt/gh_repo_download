@@ -1,12 +1,13 @@
 import asyncio
 import io
+import logging
 import os
 import zipfile
 
 import httpx
 from django.conf import settings
 
-from downloader.views import logger
+logger = logging.getLogger(__name__)
 
 
 class RepositorySizeExceededError(Exception):
