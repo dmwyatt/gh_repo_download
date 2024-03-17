@@ -1,0 +1,20 @@
+{
+  "name": "gh_repo_download",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "tiktoken": "^1.0.13",
+    "vite": "^5.1.6"
+  },
+  "devDependencies": {
+    "vite-plugin-top-level-await": "^1.4.1",
+    "vite-plugin-wasm": "^3.3.0"
+  }
+}

@@ -1,13 +1,17 @@
+{% load django_vite %}
 <!DOCTYPE html>
 <html>
 <head>
     <title>Download Repository</title>
+    {% vite_hmr_client %}
+    {% vite_asset 'downloader/vite_assets/main.js' %}
 </head>
 <body>
     <h1>{{ repo_name }}</h1>
-    <p>Generated file: <a href="{% url 'download_file' output_file %}">{{ output_file }}</a></p>
+    <p>Generated file: <a href="data:text/plain;charset=utf-8,{{ encoded_file_content}}" download="{{ repo_name }}.txt">Download file</a></p>
     <p>File size: {{ file_size }} bytes</p>
-    <p>Number of files: {{ file_count }}</p>
-    <!-- Add any other interesting information -->
+    <p>Number of files in download: {{ concatenated_file_count }}</p>
+    <p>Total repo files: {{ total_file_count }}</p>
+    <p>cl100k_base token count: <span id="cl100k_base_token_count">Loading...</span></p>
 </body>
 </html>
