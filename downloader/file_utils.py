@@ -7,13 +7,14 @@ from django.template import loader
 
 logger = logging.getLogger(__name__)
 
+
 def is_plain_text_file(file_path):
     allow_list = list(range(9, 11)) + list(range(13, 14)) + list(range(32, 256))
     gray_list = [7, 8, 11, 12, 26, 27]
     block_list = list(range(0, 7)) + list(range(14, 32))
 
     allow_found = False
-    with open(file_path, 'rb') as f:
+    with open(file_path, "rb") as f:
         while True:
             chunk = f.read(4096)
             if not chunk:
@@ -66,11 +67,13 @@ def is_safe_filename(filename):
     return True
 
 
-def concat_files(extracted_dir, repo_name, output_file_path):
+def concat_files(extracted_dir: str, repo_name: str) -> tuple[str, int, int]:
     template = loader.get_template("repo_template.txt")
-    files = []
+    concatenated_files = []
+    total_file_count = 0
     for root, dirs, filenames in os.walk(extracted_dir):
         for filename in filenames:
+            total_file_count += 1
             file_path = os.path.join(root, filename)
             if not is_safe_filename(filename):
                 logger.warning(f"Skipping file with unsafe filename: {file_path}")
@@ -78,17 +81,15 @@ def concat_files(extracted_dir, repo_name, output_file_path):
             if is_plain_text_file(file_path):
                 with open(file_path, "r", encoding="utf-8") as file:
                     content = file.read().strip()
-                    files.append(
-                            {
-                                "path": os.path.relpath(file_path, extracted_dir),
-                                "content": content,
-                            }
+                    concatenated_files.append(
+                        {
+                            "path": os.path.relpath(file_path, extracted_dir),
+                            "content": content,
+                        }
                     )
                     logger.info(f"Processing file: {file_path}")
             else:
                 logger.warning(f"Skipping non-text file: {file_path}")
 
-    context = {"repo_name": repo_name, "files": files}
-    output_content = template.render(context)
-    with open(output_file_path, "w", encoding="utf-8") as outfile:
-        outfile.write(output_content)
+    context = {"repo_name": repo_name, "files": concatenated_files}
+    return template.render(context), total_file_count, len(concatenated_files)

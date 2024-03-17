@@ -3,7 +3,7 @@ import logging
 import os
 import random
 import tempfile
-import uuid
+from urllib.parse import quote
 
 from django.conf import settings
 from django.contrib import messages
@@ -12,7 +12,12 @@ from django.shortcuts import redirect, render
 
 from .file_utils import concat_files
 from .forms import RepositoryForm
-from .repo_utils import RepositorySizeExceededError, download_repo, extract_files
+from .repo_utils import (
+    RepositoryDownloadError,
+    RepositorySizeExceededError,
+    download_repo,
+    extract_files,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -37,41 +42,6 @@ async def download_repo_view(request):
             try:
                 # Download and extract the repository
                 zip_file = await download_repo(repo_url)
-                if zip_file is None:
-                    error_message = "Invalid GitHub repository URL or failed to download the repository."
-                    logger.error(error_message)
-                    return render(
-                        request,
-                        "downloader.html",
-                        {"form": form, "error_message": error_message},
-                    )
-
-                with tempfile.TemporaryDirectory() as temp_dir:
-                    extracted_dir = await extract_files(zip_file, temp_dir)
-
-                    # Generate a unique filename for the output file
-                    output_filename = f"{repo_name}_{uuid.uuid4().hex}.txt"
-                    output_file = os.path.join(
-                        settings.GENERATED_FILES_DIR, output_filename
-                    )
-
-                    # Concatenate all files into a single file
-                    concat_files(extracted_dir, repo_name, output_file)
-                    file_size = os.path.getsize(output_file)
-                    file_count = sum(
-                        len(files) for _, _, files in os.walk(extracted_dir)
-                    )
-
-                    # Render the download page with repository information
-                    context = {
-                        "repo_name": repo_name,
-                        "output_file": output_filename,
-                        "file_size": file_size,
-                        "file_count": file_count,
-                        # Add any other interesting information
-                    }
-                    return render(request, "download.html", context)
-
             except RepositorySizeExceededError as e:
                 error_message = str(e)
                 logger.error(error_message)
@@ -80,6 +50,31 @@ async def download_repo_view(request):
                     "downloader.html",
                     {"form": form, "error_message": error_message},
                 )
+            except RepositoryDownloadError as e:
+                error_message = str(e)
+                logger.error(error_message)
+                return render(
+                    request,
+                    "downloader.html",
+                    {"form": form, "error_message": error_message},
+                )
+
+            with tempfile.TemporaryDirectory() as temp_dir:
+                extracted_dir = await extract_files(zip_file, temp_dir)
+
+                concat_data, total_file_count, concatenated_files_count = concat_files(
+                    extracted_dir, repo_name
+                )
+
+                context = {
+                    "repo_name": repo_name,
+                    "encoded_file_content": quote(concat_data),
+                    "file_size": len(concat_data),
+                    "concatenated_file_count": concatenated_files_count,
+                    "total_file_count": total_file_count,
+                }
+                return render(request, "download.html", context)
+
     else:
         form = RepositoryForm()
     return render(request, "downloader.html", {"form": form})
