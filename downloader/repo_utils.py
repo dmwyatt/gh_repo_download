@@ -19,43 +19,41 @@ class RepositoryDownloadError(Exception):
 
 
 async def download_repo(repo_url):
-    async with (httpx.AsyncClient(follow_redirects=True) as client):
+    async with httpx.AsyncClient(follow_redirects=True) as client:
         url = repo_url + "/archive/master.zip"
         logger.info(f"Downloading repository from URL: {url}")
-        try:
-            response = await client.get(url, headers={"Accept-Encoding": "identity"})
+
+        # Use .stream() as a context manager for streaming the response
+        async with client.stream("GET", url) as response:
             if response.status_code == 404:
                 raise RepositoryDownloadError(f"Repository not found at {url}")
             response.raise_for_status()
 
-            content_length = response.headers.get("Content-Length")
-            if content_length and int(content_length) > settings.MAX_REPO_SIZE:
+            content_length_header = response.headers.get("Content-Length")
+            max_repo_size = settings.MAX_REPO_SIZE
+            if content_length_header and int(content_length_header) > max_repo_size:
                 raise RepositorySizeExceededError(
-                    f"Repository size exceeds the maximum allowed size: {content_length} bytes"
+                        f"Repository size exceeds the maximum allowed size: {content_length_header} bytes"
                 )
 
             content = bytearray()
             async for chunk in response.aiter_bytes():
                 content.extend(chunk)
-                if len(content) > settings.MAX_REPO_SIZE:
+                if len(content) > max_repo_size:
                     raise RepositorySizeExceededError(
-                        f"Repository size exceeds the maximum allowed size: {len(content)} bytes"
+                            f"Downloaded size exceeds the maximum allowed size: {len(content)} bytes"
                     )
 
             logger.info(f"Downloaded {len(content)} bytes from {url}")
-            try:
-                zip_file = zipfile.ZipFile(io.BytesIO(content))
-                logger.info(f"Successfully extracted zip file from {url}")
-                return zip_file
-            except zipfile.BadZipFile as e:
-                logger.error(f"Invalid zip file content from {url}")
-                logger.debug(f"Content: {content}")
-                raise RepositoryDownloadError(
-                    f"Invalid zip file content from {url}"
-                ) from e
-        except httpx.HTTPError as e:
-            logger.error(f"HTTP error occurred while downloading from {url}: {str(e)}")
-            raise
+
+        # After successful download, proceed with file processing
+        try:
+            zip_file = zipfile.ZipFile(io.BytesIO(content))
+            logger.info(f"Successfully extracted zip file from {url}")
+            return zip_file
+        except zipfile.BadZipFile:
+            logger.error(f"Invalid zip file content from {url}")
+            raise RepositoryDownloadError(f"Invalid zip file content from {url}")
 
 
 async def extract_files(zip_file, temp_dir):
