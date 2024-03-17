@@ -24,6 +24,8 @@ async def download_repo(repo_url):
         logger.info(f"Downloading repository from URL: {url}")
         try:
             response = await client.get(url, headers={"Accept-Encoding": "identity"})
+            if response.status_code == 404:
+                raise RepositoryDownloadError(f"Repository not found at {url}")
             response.raise_for_status()
 
             content_length = response.headers.get("Content-Length")
