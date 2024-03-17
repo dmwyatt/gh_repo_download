@@ -3,3 +3,5 @@
 requirements.txt
 .env
 generated_files/
+/node_modules/
+/staticfiles/
