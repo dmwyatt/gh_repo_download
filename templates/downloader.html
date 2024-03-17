@@ -2,6 +2,14 @@
 <html>
 <head>
     <title>GitHub Repository Downloader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .error-message {
+            color: red;
+        }
+    </style>
 </head>
 <body>
     <h1>GitHub Repository Downloader</h1>
@@ -11,6 +19,9 @@
                 <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
             {% endfor %}
         </ul>
+    {% endif %}
+    {% if error_message %}
+        <p class="error-message">{{ error_message }}</p>
     {% endif %}
     <form method="post">
         {% csrf_token %}
