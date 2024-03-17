@@ -51,6 +51,7 @@ async def download_repo_view(request):
                     {"form": form, "error_message": error_message},
                 )
             except RepositoryDownloadError as e:
+                print('wtf')
                 error_message = str(e)
                 logger.error(error_message)
                 return render(
@@ -78,21 +79,6 @@ async def download_repo_view(request):
     else:
         form = RepositoryForm()
     return render(request, "downloader.html", {"form": form})
-
-
-def download_file(request, file_name):
-    file_path = os.path.join(settings.GENERATED_FILES_DIR, file_name)
-    if os.path.exists(file_path):
-        response = FileResponse(
-            open(file_path, "rb"), content_type="application/octet-stream"
-        )
-        response["Content-Disposition"] = f'attachment; filename="{file_name}"'
-        return response
-    else:
-        # Handle the case when the file is not found
-        error_message = "The requested file has expired. Please generate a new file."
-        messages.error(request, error_message)
-        return redirect("download_repo")
 
 
 def cleanup_generated_files():
