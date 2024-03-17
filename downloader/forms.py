@@ -6,7 +6,7 @@ def validate_repo_url(value):
     # parse the url and check if it is a valid GitHub repository
     parsed = urlparse(value)
     if parsed.netloc != "github.com":
-        raise forms.ValidationError("Invalid GitHub repository URL")
+        raise forms.ValidationError("Please provide a valid GitHub repository URL")
 
 
 class RepositoryForm(forms.Form):
