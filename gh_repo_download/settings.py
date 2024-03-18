@@ -154,7 +154,7 @@ LOGGING = {
 MAX_REPO_SIZE = 10 * 1024 * 1024
 MAX_TEXT_FILE_LINES = 2000
 MAX_FILENAME_LENGTH = 255
-RESTRICTED_FILE_EXTENSIONS = ['.exe', '.bat', '.sh', '.dll', '.so']
+RESTRICTED_FILE_EXTENSIONS = ['.exe', '.dll', '.so', '.pyc']
 
 if DEBUG:
     GENERATED_FILES_DIR = BASE_DIR / "generated_files"
