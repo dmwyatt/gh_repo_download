@@ -8,9 +8,30 @@ from django.template import loader
 logger = logging.getLogger(__name__)
 
 
-def is_plain_text_file(file_path):
+def is_plain_text_file(file_path: str):
+    """
+    Determines if a file is plain text or binary based on its content.
+
+    This function implements the plain text detection algorithm used in zlib,
+    which categorizes a file as plain text if it contains at least one byte
+    from the allow list (textual bytecodes) and no byte from the block list
+    (undesired, non-textual bytecodes).
+
+    The algorithm is based on the idea that most plain text files consist of
+    printable ASCII characters and common control characters, while binary
+    files tend to contain control characters, especially null bytes.
+
+    More information about the algorithm can be found at:
+    https://github.com/madler/zlib/blob/8678871f18f4dd51101a9db1e37791f975969079/doc/txtvsbin.txt
+
+    Args:
+        file_path (str): The path to the file to be analyzed.
+
+    Returns:
+        bool: True if the file is plain text, False otherwise.
+    """
     allow_list = list(range(9, 11)) + list(range(13, 14)) + list(range(32, 256))
-    gray_list = [7, 8, 11, 12, 26, 27]
+    # gray_list = [7, 8, 11, 12, 26, 27]
     block_list = list(range(0, 7)) + list(range(14, 32))
 
     allow_found = False
