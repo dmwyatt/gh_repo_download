@@ -9,9 +9,9 @@
 <body>
     <h1>{{ repo_name }}</h1>
     <p>Generated file: <a href="data:text/plain;charset=utf-8,{{ encoded_file_content}}" download="{{ repo_name }}.txt">Download file</a></p>
-    <p>File size: {{ file_size }} bytes</p>
-    <p>Number of files in download: {{ concatenated_file_count }}</p>
-    <p>Total repo files: {{ total_file_count }}</p>
+    <p>File size: <span class="locale-number-bytes">{{ file_size|filesizeformat }}</span></p>
+    <p>Number of files in download: <span class="locale-number">{{ concatenated_file_count }}</span></p>
+    <p>Total repo files: <span class="locale-number">{{ total_file_count }}</span></p>
     <p>cl100k_base token count: <span id="cl100k_base_token_count">Loading...</span></p>
     <p><a href="/">Download another</a></p>
 </body>
