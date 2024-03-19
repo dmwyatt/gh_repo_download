@@ -25,7 +25,7 @@ async def download_repo_view(request):
 
             try:
                 # Download and extract the repository
-                zip_file = await download_repo(repo_url)
+                result = await download_repo(repo_url)
             except RepositorySizeExceededError as e:
                 error_message = str(e)
                 logger.error(error_message)
@@ -44,7 +44,7 @@ async def download_repo_view(request):
                 )
 
             extraction = await extract_text_files(
-                zip_file,
+                result.zip_file,
                 max_files=settings.MAX_FILE_COUNT,
                 max_total_size=settings.MAX_TEXT_SIZE,
             )
@@ -52,9 +52,11 @@ async def download_repo_view(request):
             context = {
                 "repo_name": repo_name,
                 "encoded_file_content": quote(rendered_text),
-                "file_size": len(rendered_text),
+                "download_file_size": len(rendered_text),
                 "concatenated_file_count": len(extraction.text_files),
                 "total_file_count": extraction.total_files_count,
+                "zip_file_size": result.download_size,
+                "total_uncompressed_size": result.uncompressed_size,
             }
             return render(request, "download.html", context)
 
