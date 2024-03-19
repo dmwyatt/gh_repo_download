@@ -1,5 +1,6 @@
 FROM python:3.11-slim-bookworm
 
+
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
@@ -17,12 +18,13 @@ COPY . /code/
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh \
     && . $HOME/.cargo/env \
     && uv pip compile requirements.in -o requirements.txt \
-    && uv pip sync requirements.txt
+    && uv pip sync requirements.txt \
+    && uv pip install gunicorn uvicorn
 
 EXPOSE 8000
 
 CMD ["gunicorn", \
-     "template_streaming_shadow_dom.asgi:application", \
+     "gh_repo_download.asgi:application", \
      "--workers 4", \
      "--worker-class", "uvicorn.workers.UvicornWorker", \
      "--bind", "0.0.0.0:8000" \
