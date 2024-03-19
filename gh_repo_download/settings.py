@@ -151,6 +151,8 @@ LOGGING = {
     },
 }
 
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
+
 MAX_REPO_SIZE = 10 * 1024 * 1024  # size of zip file downloaded from github
 MAX_FILE_COUNT = 1000  # number of files extracted from the zip file
 MAX_TEXT_SIZE = 10 * 1024 * 1024  # size of text to be extracted from the files
