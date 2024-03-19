@@ -36,6 +36,12 @@
       button:hover {
           background-color: #3e8e41;
       }
+      
+      .forms {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+      }
   </style>
 </head>
 <body>
@@ -50,17 +56,19 @@
 {% if error_message %}
   <p class="error-message">{{ error_message }}</p>
 {% endif %}
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Download</button>
-</form>
-<form method="post" action="{% url 'download_repo' %}">
-  {% csrf_token %}
-  <input type="hidden"
-         name="repo_url"
-         value="https://github.com/dmwyatt/gh_repo_download">
-  <button type="submit">Download the text files of this project's repository</button>
-</form>
+<div class="forms">
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Download</button>
+  </form>
+  <form method="post" action="{% url 'download_repo' %}">
+    {% csrf_token %}
+    <input type="hidden"
+           name="repo_url"
+           value="https://github.com/dmwyatt/gh_repo_download">
+    <button type="submit">Test it out with this site's repo!</button>
+  </form>
+</div>
 </body>
 </html>
