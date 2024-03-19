@@ -1,8 +1,7 @@
-import asyncio
 import io
 import logging
-import os
 import zipfile
+from dataclasses import dataclass
 
 import httpx
 from django.conf import settings
@@ -18,7 +17,14 @@ class RepositoryDownloadError(Exception):
     pass
 
 
-async def download_repo(repo_url: str):
+@dataclass
+class DownloadResult:
+    zip_file: zipfile.ZipFile
+    download_size: int
+    uncompressed_size: int
+
+
+async def download_repo(repo_url: str) -> DownloadResult:
     """
     Asynchronously downloads and extracts a repository from a given URL.
 
@@ -58,7 +64,7 @@ async def download_repo(repo_url: str):
             max_repo_size = settings.MAX_REPO_SIZE
             if content_length_header and int(content_length_header) > max_repo_size:
                 raise RepositorySizeExceededError(
-                        f"Repository size exceeds the maximum allowed size: {content_length_header} bytes"
+                    f"Repository size exceeds the maximum allowed size: {content_length_header} bytes"
                 )
 
             content = bytearray()
@@ -66,7 +72,7 @@ async def download_repo(repo_url: str):
                 content.extend(chunk)
                 if len(content) > max_repo_size:
                     raise RepositorySizeExceededError(
-                            f"Downloaded size exceeds the maximum allowed size: {len(content)} bytes"
+                        f"Downloaded size exceeds the maximum allowed size: {len(content)} bytes"
                     )
 
             logger.info(f"Downloaded {len(content)} bytes from {url}")
@@ -75,7 +81,10 @@ async def download_repo(repo_url: str):
         try:
             zip_file = zipfile.ZipFile(io.BytesIO(content))
             logger.info(f"Successfully extracted zip file from {url}")
-            return zip_file
+            total_uncompressed_size = sum(
+                file.file_size for file in zip_file.infolist()
+            )
+            return DownloadResult(zip_file, len(content), total_uncompressed_size)
         except zipfile.BadZipFile:
             logger.error(f"Invalid zip file content from {url}")
             raise RepositoryDownloadError(f"Invalid zip file content from {url}")
