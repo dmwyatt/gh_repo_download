@@ -80,38 +80,3 @@ async def download_repo(repo_url: str):
         except zipfile.BadZipFile:
             logger.error(f"Invalid zip file content from {url}")
             raise RepositoryDownloadError(f"Invalid zip file content from {url}")
-
-
-async def extract_files(zip_file: zipfile.ZipFile, temp_dir: str):
-    """
-    Asynchronously extracts files from a ZIP file to a temporary directory.
-
-    This function takes a `zipfile.ZipFile` object and a temporary directory path as
-    input. It extracts all the files from the ZIP file to the specified temporary
-    directory using asynchronous operations. The function returns the path to the
-    extracted directory.
-
-    Args:
-        zip_file (zipfile.ZipFile): The ZIP file object containing the files to be
-            extracted.
-        temp_dir (str): The path to the temporary directory where the files will be
-            extracted.
-
-    Returns:
-        str: The path to the extracted directory.
-
-    Notes:
-        - The function uses the `asyncio` event loop to perform the extraction
-          asynchronously.
-        - The extracted directory name is determined by splitting the first file's path
-          in the ZIP file and taking the first part of the split.
-        - The files are extracted to a subdirectory within the specified temporary
-          directory, using the extracted directory name.
-    """
-    loop = asyncio.get_event_loop()
-    extracted_dir = await loop.run_in_executor(
-        None, lambda: zip_file.namelist()[0].split("/")[0]
-    )
-    extraction_path = os.path.join(temp_dir, extracted_dir)
-    await loop.run_in_executor(None, lambda: zip_file.extractall(path=temp_dir))
-    return extraction_path
