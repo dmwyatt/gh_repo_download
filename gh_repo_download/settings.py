@@ -151,9 +151,10 @@ LOGGING = {
     },
 }
 
-MAX_REPO_SIZE = 10 * 1024 * 1024
-MAX_TEXT_FILE_LINES = 2000
-MAX_FILENAME_LENGTH = 255
+MAX_REPO_SIZE = 10 * 1024 * 1024  # size of zip file downloaded from github
+MAX_FILE_COUNT = 1000  # number of files extracted from the zip file
+MAX_TEXT_SIZE = 10 * 1024 * 1024  # size of text to be extracted from the files
+
 RESTRICTED_FILE_EXTENSIONS = ['.exe', '.dll', '.so', '.pyc']
 
 if DEBUG:

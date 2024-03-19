@@ -1,7 +1,7 @@
 import logging
-import tempfile
 from urllib.parse import quote
 
+from django.conf import settings
 from django.shortcuts import render
 
 from .file_utils import extract_text_files
@@ -44,7 +44,11 @@ async def download_repo_view(request):
                     {"form": form, "error_message": error_message},
                 )
 
-            extraction = await extract_text_files(zip_file)
+            extraction = await extract_text_files(
+                zip_file,
+                max_files=settings.MAX_FILE_COUNT,
+                max_total_size=settings.MAX_TEXT_SIZE,
+            )
             rendered_text = extraction.render_template(repo_name, "repo_template.txt")
             context = {
                 "repo_name": repo_name,
