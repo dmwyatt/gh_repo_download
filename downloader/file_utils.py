@@ -149,14 +149,16 @@ class ExtractionResult:
     def render_template(self, repo_name: str, template_name: str) -> str:
         files = []
         for file_path, file_content in self.text_files.items():
-            files.append({
-                'path': file_path,
-                'content': file_content,
-            })
+            files.append(
+                {
+                    "path": file_path,
+                    "content": file_content,
+                }
+            )
 
         context = {
-            'repo_name': repo_name,
-            'files': files,
+            "repo_name": repo_name,
+            "files": files,
         }
         rendered_template = render_to_string(template_name, context)
         return rendered_template
@@ -237,7 +239,9 @@ async def extract_text_files(
 
                     text_files[member.filename] = content
 
-        return ExtractionResult(text_files, file_limit_reached, size_limit_reached, total_files)
+        return ExtractionResult(
+            text_files, file_limit_reached, size_limit_reached, total_files
+        )
 
     extraction_result = await loop.run_in_executor(None, extract_files)
     return extraction_result
