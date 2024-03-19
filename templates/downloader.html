@@ -28,5 +28,10 @@
         {{ form.as_p }}
         <button type="submit">Download</button>
     </form>
+    <form method="post" action="{% url 'download_repo' %}">
+        {% csrf_token %}
+        <input type="hidden" name="repo_url" value="https://github.com/dmwyatt/gh_repo_download">
+        <button type="submit">Download the text files of this project's repository</button>
+    </form>
 </body>
 </html>
