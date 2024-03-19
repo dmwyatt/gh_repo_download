@@ -49,7 +49,6 @@ async def download_repo(repo_url: str):
         url = repo_url + "/archive/master.zip"
         logger.info(f"Downloading repository from URL: {url}")
 
-        # Use .stream() as a context manager for streaming the response
         async with client.stream("GET", url) as response:
             if response.status_code == 404:
                 raise RepositoryDownloadError(f"Repository not found at {url}")
