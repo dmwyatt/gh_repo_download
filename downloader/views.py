@@ -35,7 +35,6 @@ async def download_repo_view(request):
                     {"form": form, "error_message": error_message},
                 )
             except RepositoryDownloadError as e:
-                print('wtf')
                 error_message = str(e)
                 logger.error(error_message)
                 return render(
