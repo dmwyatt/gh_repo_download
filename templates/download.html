@@ -8,13 +8,29 @@
 </head>
 <body>
     <h1>{{ repo_name }}</h1>
+    <p>
+        <a id="download-link" href="data:text/plain;charset=utf-8,{{ encoded_file_content }}" download="{{ repo_name }}.txt">Download file</a>
+        <button onclick="copyToClipboard()">Copy to Clipboard</button>
+    </p>
     <p>Zip file size: <span>{{ zip_file_size|filesizeformat }}</span></p>
     <p>Total uncompressed size: <span>{{ total_uncompressed_size|filesizeformat }}</span></p>
-    <p>Generated file: <a href="data:text/plain;charset=utf-8,{{ encoded_file_content}}" download="{{ repo_name }}.txt">Download file</a></p>
     <p>Download File size: <span>{{ download_file_size|filesizeformat }}</span></p>
     <p>Number of files in download: <span class="locale-number">{{ concatenated_file_count }}</span></p>
     <p>Total repo files: <span class="locale-number">{{ total_file_count }}</span></p>
     <p>cl100k_base token count: <span id="cl100k_base_token_count">Loading...</span></p>
     <p><a href="/">Download another</a></p>
+
+    <script>
+        function copyToClipboard() {
+            const downloadLink = document.getElementById("download-link");
+            const dataURI = downloadLink.getAttribute("href");
+            const content = decodeURIComponent(dataURI.split(",")[1]);
+            navigator.clipboard.writeText(content).then(function() {
+                alert("File contents copied to clipboard!");
+            }, function(err) {
+                console.error("Could not copy text: ", err);
+            });
+        }
+    </script>
 </body>
 </html>
