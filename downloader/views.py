@@ -62,4 +62,10 @@ async def download_repo_view(request):
 
     else:
         form = RepositoryForm()
-    return render(request, "downloader.html", {"form": form})
+    context = {
+        "form": form,
+        "MAX_REPO_SIZE": settings.MAX_REPO_SIZE,
+        "MAX_FILE_COUNT": settings.MAX_FILE_COUNT,
+        "MAX_TEXT_SIZE": settings.MAX_TEXT_SIZE,
+    }
+    return render(request, "downloader.html", context)

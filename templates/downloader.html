@@ -36,39 +36,119 @@
       button:hover {
           background-color: #3e8e41;
       }
-      
+
       .forms {
           display: flex;
           flex-direction: column;
           gap: 10px;
       }
+
+      .section {
+          margin-bottom: 20px;
+      }
+
+      .section h2 {
+          font-size: 20px;
+          margin-bottom: 10px;
+      }
+
+      .section ul {
+          margin-left: 20px;
+      }
+
+      .section p {
+          margin-bottom: 10px;
+      }
   </style>
 </head>
 <body>
 <h1>GitHub Repository Downloader</h1>
-{% if messages %}
-  <ul class="messages">
-    {% for message in messages %}
-      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-    {% endfor %}
-  </ul>
-{% endif %}
-{% if error_message %}
-  <p class="error-message">{{ error_message }}</p>
-{% endif %}
-<div class="forms">
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Download</button>
-  </form>
-  <form method="post" action="{% url 'download_repo' %}">
-    {% csrf_token %}
-    <input type="hidden"
-           name="repo_url"
-           value="https://github.com/dmwyatt/gh_repo_download">
-    <button type="submit">Test it out with this site's repo!</button>
-  </form>
+
+<section>
+  {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+  {% if error_message %}
+    <p class="error-message">{{ error_message }}</p>
+  {% endif %}
+  <div class="forms">
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">Download</button>
+    </form>
+    <form method="post" action="{% url 'download_repo' %}">
+      {% csrf_token %}
+      <input type="hidden"
+             name="repo_url"
+             value="https://github.com/dmwyatt/gh_repo_download">
+      <button type="submit">Test it out with this site's repo!</button>
+    </form>
+  </div>
+</section>
+
+<div class="section">
+  <h2>What is this site?</h2>
+  <p>This site allows you to download and view the contents of a GitHub repository as a
+     single text file.</p>
 </div>
+
+<div class="section">
+  <h2>Why was this tool created?</h2>
+  <p>This tool was created to make it easy to share context with chatbots like Claude. By downloading a GitHub repository as a single text file, you can easily provide the chatbot with the necessary context to understand and discuss the contents of the repository.</p>
+  <p>Here are a few examples of how this tool can be useful when interacting with chatbots:</p>
+  <ul>
+    <li>Share the source code of a project with the chatbot to discuss implementation details or get suggestions for improvements.</li>
+    <li>Provide the chatbot with a repository containing documentation or research papers to facilitate a conversation about the topics covered.</li>
+    <li>Use the downloaded text file to give the chatbot context about a specific topic or domain, enabling more informed and relevant responses.</li>
+  </ul>
+</div>
+
+<div class="section">
+  <h2>How to use:</h2>
+  <ol>
+    <li>Enter the URL of a GitHub repository in the form below.</li>
+    <li>Click the "Download" button.</li>
+    <li>The site will process the repository and generate a downloadable text file.</li>
+    <li>On the next page, click the "Download file" link to save the text file locally.
+    </li>
+  </ol>
+</div>
+
+<div class="section">
+  <h2>Limitations and Considerations:</h2>
+  <ul>
+    <li>The maximum size of repositories that can be downloaded
+        is {{ MAX_REPO_SIZE|filesizeformat }}.
+    </li>
+    <li>Only text files from the repository will be included in the downloaded file.</li>
+    <li>The downloaded file is a concatenation of the text files from the repository.</li>
+    <li>We'll stop after processing {{ MAX_FILE_COUNT }} files from the repo.</li>
+    <li>We'll only deliver up to {{ MAX_TEXT_SIZE|filesizeformat }} of text.</li>
+  </ul>
+</div>
+
+<div class="section">
+  <h2>FAQ:</h2>
+  <p><strong>Q: What types of files are included in the download?</strong><br>
+    A: Only text files from the repository are included in the downloaded file.</p>
+
+  <p><strong>Q: What is the size limit for the repositories that can be
+             downloaded?</strong><br>
+    A: The maximum size limit for repositories is {{ MAX_REPO_SIZE|filesizeformat }}.
+    Repositories exceeding this limit cannot be downloaded.</p>
+</div>
+
+<div class="section">
+  <h2>Disclaimer:</h2>
+  <p>This site is for informational purposes only. Users are responsible for complying
+     with GitHub's terms of service and any applicable licenses or permissions when
+     downloading repositories.</p>
+</div>
+
 </body>
 </html>
