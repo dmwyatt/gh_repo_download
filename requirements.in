@@ -2,4 +2,7 @@ Django
 django-environ
 django-vite
 httpx
+mdformat-gfm
+pytest
+pytest-django
 whitenoise[brotli]
