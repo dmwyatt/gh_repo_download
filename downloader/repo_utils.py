@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 import httpx
 from django.conf import settings
+from django.template.defaultfilters import filesizeformat
 
 logger = logging.getLogger(__name__)
 
@@ -61,18 +62,25 @@ async def download_repo(repo_url: str) -> DownloadResult:
             response.raise_for_status()
 
             content_length_header = response.headers.get("Content-Length")
+            print(content_length_header)
             max_repo_size = settings.MAX_REPO_SIZE
             if content_length_header and int(content_length_header) > max_repo_size:
+                csize = filesizeformat(content_length_header)
+                msize = filesizeformat(max_repo_size)
+                print(csize, msize)
                 raise RepositorySizeExceededError(
-                    f"Repository size exceeds the maximum allowed size: {content_length_header} bytes"
+                    f"Repository size exceeds the maximum allowed size. "
+                    f"Reported size: {csize}, "
+                    f"Max size: {msize}"
                 )
-
             content = bytearray()
             async for chunk in response.aiter_bytes():
                 content.extend(chunk)
                 if len(content) > max_repo_size:
+                    msize = filesizeformat(max_repo_size)
                     raise RepositorySizeExceededError(
-                        f"Downloaded size exceeds the maximum allowed size: {len(content)} bytes"
+                        f"Downloaded size exceeds the maximum allowed size. "
+                        f"Max size: {msize}"
                     )
 
             logger.info(f"Downloaded {len(content)} bytes from {url}")
