@@ -25,6 +25,15 @@ Here are a few examples of how this tool can be useful when interacting with cha
 
 Here's stuff that "interesting" in the sense that they explain the core of the project.
 
+### Token counting
+
+We provide a [token](https://platform.openai.com/tokenizer) count for the text file. The
+interesting thing about this is that the token count is done in-browser via a packaging of
+the python `tiktoken` library via WASM.
+
+Counting tokens isn't exactly a trivial task. By doing it on the client we take a load off
+the server. The tradeoff is that it's a bit more than 4MB to download.
+
 ### ZIP files
 
 To download a given repo, we just slap `/archive/master.zip` onto the end of the URL. This
