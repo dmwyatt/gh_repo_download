@@ -29,11 +29,9 @@ class RepositoryForm(forms.Form):
         repo_url = cleaned_data.get("repo_url")
         if repo_url:
             parsed = urlparse(repo_url)
-            # only domain and first two parts of the path
-            # the user might have pasted a path "deeper" in the repo
-            # so we want to truncate it to the first two parts
-            path = parsed.path
-            path = parsed.path.split("/")
-            fixed_up_path = "/".join(path[1:3])
-            cleaned_data["repo_url"] = f"https://{parsed.netloc}/{fixed_up_path}"
+            if repo_url:
+                parsed = urlparse(repo_url)
+                path_parts = parsed.path.strip('/').split('/')
+                cleaned_data['username'] = path_parts[0]
+                cleaned_data['repo_name'] = path_parts[1]
         return cleaned_data

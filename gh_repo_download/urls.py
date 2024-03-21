@@ -1,7 +1,8 @@
 from django.urls import path
 
-from downloader.views import download_repo_view
+from downloader import views
 
 urlpatterns = [
-    path("", download_repo_view, name="download_repo"),
+    path('', views.download_repo_view, name='download_repo'),
+    path('download/result/<str:username>/<str:repo_name>/', views.download_result_view, name='download_result'),
 ]
