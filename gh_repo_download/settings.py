@@ -47,8 +47,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-'whitenoise.middleware.WhiteNoiseMiddleware',
-
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -124,7 +123,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -156,16 +155,14 @@ LOGGING = {
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
 STORAGES = {
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"
-    }
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"}
 }
 
 MAX_REPO_SIZE = 10 * 1024 * 1024  # size of zip file downloaded from github
 MAX_FILE_COUNT = 1000  # number of files extracted from the zip file
 MAX_TEXT_SIZE = 10 * 1024 * 1024  # size of text to be extracted from the files
 
-RESTRICTED_FILE_EXTENSIONS = ['.exe', '.dll', '.so', '.pyc']
+RESTRICTED_FILE_EXTENSIONS = [".exe", ".dll", ".so", ".pyc"]
 
 if DEBUG:
     GENERATED_FILES_DIR = BASE_DIR / "generated_files"
@@ -175,8 +172,4 @@ else:
     ).resolve()
 
 
-DJANGO_VITE = {
-  "default": {
-    "dev_mode": DEBUG
-  }
-}
+DJANGO_VITE = {"default": {"dev_mode": DEBUG}}
