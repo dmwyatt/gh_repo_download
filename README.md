@@ -57,6 +57,15 @@ might lead to some errors that are best displayed on the form page. So we store 
 appropriate errors in the session and then redirect back to the form page which reads the
 errors from the session and sends them to the template for display.
 
+### Data URI
+
+As a side effect of doing everything in-memory, we don't have an URL to download the 
+concatenated file from.  Instead, we embed the file in the HTML on the results page as a 
+data URI.
+
+Since we also have a "copy to clipboard" button, we just read the data URI in Javascript, 
+decode it, and copy it to the clipboard.
+
 ### Size management
 
 We do need to worry about downloading excessively large repos or delivering excessively
