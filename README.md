@@ -59,11 +59,11 @@ errors from the session and sends them to the template for display.
 
 ### Data URI
 
-As a side effect of doing everything in-memory, we don't have an URL to download the 
-concatenated file from.  Instead, we embed the file in the HTML on the results page as a 
+As a side effect of doing everything in-memory, we don't have an URL to download the
+concatenated file from. Instead, we embed the file in the HTML on the results page as a
 data URI.
 
-Since we also have a "copy to clipboard" button, we just read the data URI in Javascript, 
+Since we also have a "copy to clipboard" button, we just read the data URI in Javascript,
 decode it, and copy it to the clipboard.
 
 ### Size management
@@ -96,7 +96,8 @@ the entire file or considering ambiguous byte values.
 
 Once we've determined a file is a text file, we check it for encoding declarations like
 XML's `<?xml version="1.0" encoding="UTF-8"?>` or Python's `# -*- coding: utf-8  -*-` and
-use whatever we find there. If we don't find anything we just assume "UTF-8".
+use whatever we find there. If we don't find anything we just assume "UTF-8". See more
+here: `downloader.file_utils.is_plain_text_file`.
 
 ## Configurations
 
