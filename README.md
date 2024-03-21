@@ -50,12 +50,12 @@ Everything is kept in memory for a couple of reasons:
 - Security implications of unzipping files from the internet. We don't have to think about
   handling relative paths or any other shenanigans that could be in the ZIP file.
 
-A side effect of this is that we do a bit of non-standard handling of the POST/GET of 
-the form. We do the downloading and processing of the repo in the view that you get 
-redirected to after the form is submitted. The weird part is that the downloading and 
-processing might lead to some errors that are best displayed on the form page. So we 
-store the appropriate errors in the session and then redirect back to the form page 
-which reads the errors from the session and sends them to the template for display.
+A side effect of this is that we do a bit of non-standard handling of the POST/GET of the
+form. We do the downloading and processing of the repo in the view that you get redirected
+to after the form is submitted. The weird part is that the downloading and processing
+might lead to some errors that are best displayed on the form page. So we store the
+appropriate errors in the session and then redirect back to the form page which reads the
+errors from the session and sends them to the template for display.
 
 ### Size management
 
