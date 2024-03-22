@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{% block title %}{% endblock %}</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        color: #333;
+    }
+
+    .container {
+        max-width: 960px;
+        margin: auto;
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+
+    .action-links a, .action-links button, button {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 15px;
+        text-decoration: none;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        display: inline-block;
+        margin-bottom: 10px; /* Adjust spacing between buttons if needed */
+    }
+
+    .action-links a:hover, .action-links button:hover, button:hover {
+        background-color: #0056b3;
+    }
+
+    .info-key {
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .info-value {
+        font-weight: normal;
+        margin-bottom: 10px;
+    }
+
+    @media (max-width: 600px) {
+        .action-links a, .action-links button, button {
+            font-size: 16px;
+            padding: 12px;
+        }
+    }
+</style>
+
+  {% block head %}{% endblock %}
+  {% block extra_style %}{% endblock %}
+</head>
+<body>
+  <header>
+    <a href="https://github.com/dmwyatt/gh_repo_download" target="_blank">View on Github</a>
+  </header>
+  
+  {% block content %}{% endblock %}
+
+  <footer>
+    <!-- Add any common footer content here -->
+  </footer>
+</body>
+</html>
