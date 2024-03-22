@@ -159,50 +159,19 @@ def _detect_internal_encoding(file_obj: IO[bytes]) -> tuple[str, str] | tuple[No
 
 
 def is_binary_mode(file_obj: Any) -> bool:
-    """
-    Determines if the provided file object is in binary mode.
-
-    This function checks the type and attributes of a file object to determine if it is
-    operating in binary mode. It supports binary in-memory streams (`io.BytesIO`),
-    text in-memory streams (`io.StringIO`), regular file objects, buffered binary
-    streams (`io.BufferedReader`, `io.BufferedWriter`), and other generic file objects.
-
-    Args:
-        file_obj (Any): The file object to be checked.
-
-    Returns:
-        bool: `True` if the file object is in binary mode, `False` otherwise.
-
-    Raises:
-        None
-
-    Examples:
-        >>> import io
-        >>> binary_file = io.BytesIO()
-        >>> is_binary_mode(binary_file)
-        True
-
-        >>> text_file = io.StringIO("Some text content")
-        >>> is_binary_mode(text_file)
-        False
-    """
-
-    # Check for io.BytesIO (binary in-memory stream)
-    if isinstance(file_obj, io.BytesIO):
+    if isinstance(file_obj, (io.BufferedIOBase, bytes, bytearray,
+                             memoryview)):  # Check if it has buffer interface - binary in python
         return True
-    # Check for io.StringIO (text in-memory stream)
-    elif isinstance(file_obj, io.StringIO):
+    elif isinstance(file_obj, (str,
+                               io.TextIOBase)):  # Check if it's a string or a TextIOWrapper - textual data in python
         return False
-    # Check for binary mode in regular file objects and buffered binary streams
-    elif hasattr(file_obj, "mode"):
-        return "b" in file_obj.mode
-    # Check for buffered binary stream objects without 'mode' attribute
-    elif isinstance(file_obj, (io.BufferedReader, io.BufferedWriter)):
-        return True
-    # If none of the above, return False indicating not binary or unknown
     else:
-        return False
-
+        # If the type of file is not determined yet (it's not part of standard Python types)
+        # then we check the nature of the buffer (at its base) if it's available
+        try:
+            return isinstance(file_obj.buffer, io.BufferedIOBase)
+        except AttributeError:
+            return False
 
 def detect_internal_encoding(file: IO[bytes]) -> str:
     """
@@ -375,7 +344,7 @@ async def extract_text_files(
                 file_limit_reached = True
                 break
 
-            with zip_file.open(member) as file:
+            with zip_file.open(member, "r") as file:
                 if is_plain_text_file(file):
                     encoding = detect_internal_encoding(file)
                     if encoding:
