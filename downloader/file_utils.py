@@ -1,6 +1,8 @@
 import asyncio
 import codecs
+import io
 import logging
+import re
 import zipfile
 from dataclasses import dataclass
 from typing import BinaryIO, IO, TextIO
@@ -10,89 +12,108 @@ from django.template.loader import render_to_string
 logger = logging.getLogger(__name__)
 
 
-def detect_internal_encoding(file: IO) -> str | None:
-    """
-    Detects the encoding of a file based on common encoding declaration mechanisms.
+def find_encoding_declaration(decoded_content):
+    # Regular expressions for encoding declarations
+    encoding_patterns = {
+        "Python": re.compile(r"coding[=:]\s*([-\w.]+)"),
+        "Ruby": re.compile(r"coding[=:]\s*([-\w.]+)"),
+        "XML": re.compile(r'<\?xml\s+.*encoding=["\']([-\w.]+)["\'].*\?>'),
+        "HTML": re.compile(r'<meta\s+.*charset=["\']([-\w.]+)["\'].*>'),
+        "Perl": re.compile(r'use\s+encoding\s+["\']([-\w.]+)["\']'),
+        "CSS": re.compile(r'@charset\s+["\']([-\w.]+)["\']'),
+        "LaTeX": re.compile(r"%\s*!TEX\s+encoding\s*=\s*([-\w.]+)"),
+        "XHTML": re.compile(r'<\?xml\s+.*encoding=["\']([-\w.]+)["\'].*\?>'),
+    }
 
-    Args:
-        file: An open file object.
+    # Check for encoding declarations in the decoded content
+    for file_type, pattern in encoding_patterns.items():
+        match = pattern.search(decoded_content)
+        if match:
+            encoding = match.group(1)
+            try:
+                codecs.lookup(encoding)
+                return file_type, encoding
+            except LookupError:
+                return file_type, None
 
-    Returns:
-        The detected encoding as a string if found and valid, or None if no encoding
-        declaration is detected or the encoding is invalid.
+    # No encoding declaration found
+    return None, None
 
-    Supported File Types:
-        - Python
-        - Ruby
-        - XML
-        - HTML
-        - Perl
-        - CSS
-        - LaTeX
-        - XHTML
 
-    Limitations:
-        - The function relies on specific encoding declaration formats and may not
-          detect encodings in files that use different declaration mechanisms or lack
-          an encoding declaration altogether.
-        - The function reads only the first few lines of the file (up to 5 lines) to
-          search for encoding declarations. If the declaration appears later in the
-          file, it may not be detected.
-        - The function assumes that the encoding declaration is in ASCII or a
-          compatible encoding. Files with non-ASCII encoding declarations may not be
-          detected correctly.
-    """
-    # Reset the file position to the beginning
-    file.seek(0)
+def _detect_internal_encoding(file_obj):
+    # Read the first 1024 bytes of the file
+    content = file_obj.read(1024)
 
-    # Read the first few lines of the file
-    lines = []
-    for _ in range(5):
-        line = file.readline()
-        if isinstance(line, bytes):
-            line = line.decode("ascii", errors="ignore")
-        if not line:
+    # Check for Byte Order Mark (BOM) and decode the content accordingly
+    encoding = None
+    for bom, bom_encoding in [
+        (codecs.BOM_UTF32_LE, "utf-32-le"),
+        (codecs.BOM_UTF32_BE, "utf-32-be"),
+        (codecs.BOM_UTF16_LE, "utf-16-le"),
+        (codecs.BOM_UTF16_BE, "utf-16-be"),
+        (codecs.BOM_UTF8, "utf-8-sig"),
+    ]:
+        if content.startswith(bom):
+            encoding = bom_encoding
             break
-        lines.append(line)
 
-    # Join the lines back into a single string
-    content = "".join(lines)
-
-    # Check for encoding declarations
-    if "# -*- coding:" in content:
-        # Python encoding declaration
-        encoding = content.split("# -*- coding:", 1)[1].split("-*-", 1)[0].strip()
-    elif "# encoding:" in content:
-        # Ruby encoding declaration
-        encoding = content.split("# encoding:", 1)[1].split("\n", 1)[0].strip()
-    elif "<?xml" in content and "encoding=" in content:
-        # XML encoding declaration
-        encoding = content.split('encoding="', 1)[1].split('"', 1)[0].strip()
-    elif "<meta charset=" in content:
-        # HTML encoding declaration
-        encoding = content.split('<meta charset="', 1)[1].split('"', 1)[0].strip()
-    elif "use encoding" in content:
-        # Perl encoding declaration
-        encoding = content.split("use encoding '", 1)[1].split("'", 1)[0].strip()
-    elif "@charset" in content:
-        # CSS encoding declaration
-        encoding = content.split('@charset "', 1)[1].split('"', 1)[0].strip()
-    elif "% !TEX encoding =" in content:
-        # LaTeX encoding declaration
-        encoding = content.split("% !TEX encoding =", 1)[1].split("\n", 1)[0].strip()
+    if encoding:
+        decoded_content = content.decode(encoding)
     else:
-        encoding = None
-
-    # Check if the detected encoding is valid and supported by Python
-    if encoding is not None:
         try:
-            codecs.lookup(encoding)
-        except LookupError:
-            encoding = None
+            decoded_content = content.decode("utf-8")
+        except UnicodeDecodeError:
+            # If UTF-8 decoding fails, degrade gracefully to ASCII with error ignoring
+            decoded_content = content.decode("ascii", errors="ignore")
 
-    # Reset the file position to the beginning
+    file_type, encoding = find_encoding_declaration(decoded_content)
+
+    if encoding:
+        return file_type, encoding
+
+    # If no encoding found, try decoding with EBCDIC variants to find encoding
+    # declarations
+    fallback_encodings = ["cp875", "cp1026", "cp1140"]
+    for fallback_encoding in fallback_encodings:
+        try:
+            # Decode content using the fallback encoding
+            decoded_content = content.decode(fallback_encoding)
+            file_type, encoding = find_encoding_declaration(decoded_content)
+            if encoding:
+                return file_type, encoding
+        except UnicodeDecodeError:
+            # Decoding failed, try the next encoding
+            continue
+
+    # Return None if no encoding declaration is found after all attempts
+    return None, None
+
+
+def is_binary_mode(file):
+    # Check for io.BytesIO (binary in-memory stream)
+    if isinstance(file, io.BytesIO):
+        return True
+    # Check for io.StringIO (text in-memory stream)
+    elif isinstance(file, io.StringIO):
+        return False
+    # Check for binary mode in regular file objects and buffered binary streams
+    elif hasattr(file, "mode"):
+        return "b" in file.mode
+    # Check for buffered binary stream objects without 'mode' attribute
+    elif isinstance(file, (io.BufferedReader, io.BufferedWriter)):
+        return True
+    # If none of the above, return False indicating not binary or unknown
+    else:
+        return False
+
+
+def detect_internal_encoding(file):
+    if not is_binary_mode(file):
+        raise ValueError("File must be opened in binary mode")
+
     file.seek(0)
-
+    file_type, encoding = _detect_internal_encoding(file)
+    file.seek(0)
     return encoding
 
 
