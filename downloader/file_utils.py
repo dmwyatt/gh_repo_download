@@ -237,6 +237,10 @@ def is_plain_text_file(file_obj: IO[bytes]) -> bool:
 
     Returns:
         bool: True if the file is plain text, False otherwise.
+
+    Note:
+        Empty files are considered plain text by this function. If you want to
+        treat empty files as binary, check the file size before calling this function.
     """
     allow_list = list(range(9, 11)) + list(range(13, 14)) + list(range(32, 256))
     # gray_list = [7, 8, 11, 12, 26, 27]
@@ -245,6 +249,12 @@ def is_plain_text_file(file_obj: IO[bytes]) -> bool:
     allow_found = False
 
     file_obj.seek(0)
+
+    # Check if the file is empty and return True immediately if it is
+    first_byte = file_obj.read(1)
+    if not first_byte:
+        return True  # Return True for an empty file
+
     while True:
         chunk = file_obj.read(4096)
         if not chunk:
