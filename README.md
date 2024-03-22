@@ -76,13 +76,13 @@ decode it, and copy it to the clipboard.
 ### Resource management
 
 We do need to worry about downloading excessively large repos or delivering excessively
-large text files. 
+large text files.
 
-- `downloader.repo_utils.download_repo` restricts the largest 
-size of ZIP file we download, 
-- `downloader.file_utils.extract_text_files` limits the total number of files we'll 
+- `downloader.repo_utils.download_repo` restricts the largest size of ZIP file we
+  download,
+- `downloader.file_utils.extract_text_files` limits the total number of files we'll
   process.
-- `downloader.file_utils.extract_text_files` also limits the total size of text we'll 
+- `downloader.file_utils.extract_text_files` also limits the total size of text we'll
   deliver.
 
 ### Text files only (hopefully)
