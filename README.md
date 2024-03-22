@@ -23,7 +23,7 @@ Here are a few examples of how this tool can be useful when interacting with cha
 
 ## Somewhat interesting stuff
 
-Here's some stuff that is "interesting" in the project.
+Here's some stuff that is  at least somewhat interesting about the project.
 
 ### Token counting
 
