@@ -73,17 +73,17 @@ can have a lot!
 Since we also have a "copy to clipboard" button, we just read the data URI in Javascript,
 decode it, and copy it to the clipboard.
 
-### Size management
+### Resource management
 
 We do need to worry about downloading excessively large repos or delivering excessively
-large text files. We have a few settings to manage this:
+large text files. 
 
-- `settings.MAX_REPO_SIZE` - The maximum size of a repo that we'll download. This is
-  somewhat misnamed...it's actually the maximum size of the ZIP file we'll download.\
-  In
-  `downloader.repo_utils.download_repo` we check the `Content-Length` header and abort if
-  it's too large. We also don't solely rely on that header and watch the size as we're
-  downloading and if it exceeds the limit, we'll abort the download.
+- `downloader.repo_utils.download_repo` restricts the largest 
+size of ZIP file we download, 
+- `downloader.file_utils.extract_text_files` limits the total number of files we'll 
+  process.
+- `downloader.file_utils.extract_text_files` also limits the total size of text we'll 
+  deliver.
 
 ### Text files only (hopefully)
 
@@ -104,7 +104,7 @@ the entire file or considering ambiguous byte values.
 Once we've determined a file is a text file, we check it for encoding declarations like
 XML's `<?xml version="1.0" encoding="UTF-8"?>` or Python's `# -*- coding: utf-8  -*-` and
 use whatever we find there. If we don't find anything we just assume "UTF-8". See more
-here: `downloader.file_utils.is_plain_text_file`.
+here: `downloader.file_utils.detect_internal_encoding`.
 
 ## Configurations
 
