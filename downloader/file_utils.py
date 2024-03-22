@@ -5,14 +5,53 @@ import logging
 import re
 import zipfile
 from dataclasses import dataclass
-from typing import BinaryIO, IO, TextIO
+from typing import Any, BinaryIO, IO, TextIO
 
 from django.template.loader import render_to_string
 
 logger = logging.getLogger(__name__)
 
 
-def find_encoding_declaration(decoded_content):
+def find_encoding_declaration(
+    decoded_content: str,
+) -> tuple[str, str] | tuple[str, None] | tuple[None, None]:
+    """
+    Searches for and verifies encoding declarations within a given string.
+
+    The function scans the input string for encoding declarations specific to several
+    file types. If a valid encoding declaration is found, the file type and the
+    encoding are returned. If the encoding declaration is found but is invalid,
+    the function returns the file type and None. If no encoding declaration is
+    detected, the function returns (None, None).
+
+    Supported file types include:
+    - Python
+    - Ruby
+    - XML
+    - HTML
+    - Perl
+    - CSS
+    - LaTeX
+    - XHTML
+
+    Args:
+        decoded_content (str): The input string to scan for encoding declarations.
+
+    Returns:
+        A tuple (file_type, encoding) where 'file_type' is the file type of the found
+        encoding declaration, or None if no declaration was found. 'encoding' is the
+        found encoding if it's valid, or None if it's invalid or not found.
+
+    Example:
+        >>> find_encoding_declaration('# coding: utf-8')
+        ('Python', 'utf-8')
+
+        >>> find_encoding_declaration('# coding: unknown_encoding')
+        ('Python', None)
+
+        >>> find_encoding_declaration('Hello, World!')
+        (None, None)
+    """
     # Regular expressions for encoding declarations
     encoding_patterns = {
         "Python": re.compile(r"coding[=:]\s*([-\w.]+)"),
@@ -40,7 +79,37 @@ def find_encoding_declaration(decoded_content):
     return None, None
 
 
-def _detect_internal_encoding(file_obj):
+def _detect_internal_encoding(file_obj: IO[bytes]) -> tuple[str, str] | tuple[None, None]:
+    """
+    Retrieves the declared encoding from the initial content of a binary file, if present.
+
+    This function assesses the first 1024 bytes of the specified file to potentially
+    ascertain an encoding declaration. It does not guarantee the discovered encoding
+    matches the actual file encoding.
+
+    Args:
+        file_obj: The binary file handle whose encoding is to be found.
+
+    Returns:
+        A tuple containing the file type and the declared encoding found within the
+        content. If no encoding declaration is found, returns a tuple with None values.
+
+    Raises:
+        UnicodeDecodeError: If the content decoding fails for all attempted encoding
+            types.
+
+    Note:
+        This function implements fallback encodings ('utf-8', 'ascii', 'cp875',
+        'cp1026', 'cp1140') if an encoding declaration is not identified. The
+        returned encoding is based solely on any encoding declaration found within
+        the decoded content, and might not align with the actual encoding of the file.
+
+    Example:
+        >>> import io
+        >>> file = io.BytesIO(b'<?xml version="1.0" encoding="utf-8"?>\\n<root>Some data here</root>')
+        >>> _detect_internal_encoding(file)
+        ('XML', 'utf-8')
+    """
     # Read the first 1024 bytes of the file
     content = file_obj.read(1024)
 
@@ -89,25 +158,86 @@ def _detect_internal_encoding(file_obj):
     return None, None
 
 
-def is_binary_mode(file):
+def is_binary_mode(file_obj: Any) -> bool:
+    """
+    Determines if the provided file object is in binary mode.
+
+    This function checks the type and attributes of a file object to determine if it is
+    operating in binary mode. It supports binary in-memory streams (`io.BytesIO`),
+    text in-memory streams (`io.StringIO`), regular file objects, buffered binary
+    streams (`io.BufferedReader`, `io.BufferedWriter`), and other generic file objects.
+
+    Args:
+        file_obj (Any): The file object to be checked.
+
+    Returns:
+        bool: `True` if the file object is in binary mode, `False` otherwise.
+
+    Raises:
+        None
+
+    Examples:
+        >>> import io
+        >>> binary_file = io.BytesIO()
+        >>> is_binary_mode(binary_file)
+        True
+
+        >>> text_file = io.StringIO("Some text content")
+        >>> is_binary_mode(text_file)
+        False
+    """
+
     # Check for io.BytesIO (binary in-memory stream)
-    if isinstance(file, io.BytesIO):
+    if isinstance(file_obj, io.BytesIO):
         return True
     # Check for io.StringIO (text in-memory stream)
-    elif isinstance(file, io.StringIO):
+    elif isinstance(file_obj, io.StringIO):
         return False
     # Check for binary mode in regular file objects and buffered binary streams
-    elif hasattr(file, "mode"):
-        return "b" in file.mode
+    elif hasattr(file_obj, "mode"):
+        return "b" in file_obj.mode
     # Check for buffered binary stream objects without 'mode' attribute
-    elif isinstance(file, (io.BufferedReader, io.BufferedWriter)):
+    elif isinstance(file_obj, (io.BufferedReader, io.BufferedWriter)):
         return True
     # If none of the above, return False indicating not binary or unknown
     else:
         return False
 
 
-def detect_internal_encoding(file):
+def detect_internal_encoding(file: IO[bytes]) -> str:
+    """
+    Detects and returns the declared encoding of a binary file based on its content.
+
+    This function is designed to work with files opened in binary mode. It reads the
+    beginning of the file to identify any declared encoding information. The main
+    purpose is to facilitate the discovery of file encoding to guide further processing
+    tasks, such as reading or parsing the file content accurately.
+
+    Args:
+        file (IO[bytes]): A file object opened in binary mode. The function seeks
+        to the beginning of the file before processing and resets the read pointer
+        to the start after completion.
+
+    Returns:
+        str: The declared encoding found within the file, if any. If the function
+        cannot identify a declared encoding, it returns `None`. This does not
+        necessarily mean the file is without encoding, just that no declaration was
+        found within the initial content examined.
+
+    Raises:
+        ValueError: If the provided file is not opened in binary mode. This function
+        relies on binary access to the file data for its operation.
+
+    Example:
+        >>> import io
+        >>> file = io.BytesIO(b'# -*- coding: utf-8 -*-\\nprint("Hello, world!")')
+        >>> detect_internal_encoding(file)
+        'utf-8'
+
+    Note:
+        For a detailed understanding of how encoding detection is performed, refer to
+        the docstring of `_detect_internal_encoding`.
+    """
     if not is_binary_mode(file):
         raise ValueError("File must be opened in binary mode")
 
@@ -117,7 +247,7 @@ def detect_internal_encoding(file):
     return encoding
 
 
-def is_plain_text_file(file_obj: BinaryIO) -> bool:
+def is_plain_text_file(file_obj: IO[bytes]) -> bool:
     """
     Determines if a file is plain text or binary based on its content.
 
