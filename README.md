@@ -23,7 +23,7 @@ Here are a few examples of how this tool can be useful when interacting with cha
 
 ## Somewhat interesting stuff
 
-Here's some stuff that is  at least somewhat interesting about the project.
+Here's some stuff that is at least somewhat interesting about the project.
 
 ### Token counting
 
@@ -61,7 +61,14 @@ errors from the session and sends them to the template for display.
 
 As a side effect of doing everything in-memory, we don't have an URL to download the
 concatenated file from. Instead, we embed the file in the HTML on the results page as a
-data URI.
+data URI. I was at first concerned about the size of the data URI, but it seems that you
+can have a lot!
+
+[According to MDN](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URLs#length_limitations):
+
+> Firefox version 97 and newer supports data URLs of up to 32MB (before 97 the limit was
+> close to 256MB). Chromium objects to URLs over 512MB, and Webkit (Safari) to URLs over
+> 2048MB.
 
 Since we also have a "copy to clipboard" button, we just read the data URI in Javascript,
 decode it, and copy it to the clipboard.
