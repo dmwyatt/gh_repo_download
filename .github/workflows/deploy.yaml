@@ -10,6 +10,7 @@ jobs:
     uses: ./.github/workflows/tests.yaml
 
   build_and_deploy:
+    needs: run-tests
     runs-on: ubuntu-latest
 
     steps:
