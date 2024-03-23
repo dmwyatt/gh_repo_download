@@ -4,6 +4,7 @@ import io
 import logging
 import re
 import zipfile
+from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any, BinaryIO, IO, TextIO
 
@@ -130,6 +131,18 @@ def detect_internal_encoding_from_bytes(
     return None, None
 
 
+@contextmanager
+def seek_to_start(file_obj):
+    file_obj.seek(0)
+
+    try:
+        # Before entering the context, no action is needed.
+        yield file_obj
+    finally:
+        # When exiting the context, seek back to the start of the file.
+        file_obj.seek(0)
+
+
 def is_plain_text_file(file_obj: IO[bytes]) -> tuple[bool, bytes]:
     """
     Determines if a file is plain text or binary based on its content.
@@ -161,30 +174,29 @@ def is_plain_text_file(file_obj: IO[bytes]) -> tuple[bool, bytes]:
 
     allow_found = False
 
-    file_obj.seek(0)
+    with seek_to_start(file_obj) as file_obj:
+        #    Check if the file is empty and return True immediately if it is
+        first_byte = file_obj.read(1)
+        if not first_byte:
+            return False, b""  # Return False for an empty file
 
-    # Check if the file is empty and return True immediately if it is
-    first_byte = file_obj.read(1)
-    if not first_byte:
-        return False, b""  # Return False for an empty file
+        first_chunk = None
 
-    first_chunk = None
+        while True:
+            chunk = file_obj.read(4095 if not first_chunk else 4096)
+            if not chunk:
+                break
 
-    while True:
-        chunk = file_obj.read(4095 if not first_chunk else 4096)
-        if not chunk:
-            break
+            if first_chunk is None:
+                first_chunk = first_byte + chunk
 
-        if first_chunk is None:
-            first_chunk = first_byte + chunk
+            for byte in chunk:
+                if byte in allow_list:
+                    allow_found = True
+                elif byte in block_list:
+                    return False, first_chunk
 
-        for byte in chunk:
-            if byte in allow_list:
-                allow_found = True
-            elif byte in block_list:
-                return False, first_chunk
-
-    return allow_found, first_chunk
+        return allow_found, first_chunk
 
 
 @dataclass
