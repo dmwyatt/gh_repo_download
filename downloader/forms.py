@@ -29,6 +29,7 @@ class RepositoryForm(forms.Form):
                 "title": "Please enter a valid GitHub URL e.g. 'https://github.com/dmwyatt/gh_repo_download'",
             }
         ),
+        assume_scheme="https",
     )
 
     def clean(self):
