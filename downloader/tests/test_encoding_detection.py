@@ -3,7 +3,7 @@ import io
 
 import pytest
 
-from downloader.file_utils import detect_internal_encoding
+from downloader.file_utils import detect_internal_encoding_from_bytes
 
 FILE_ENCODING_MAPPING = {
     "python": {
@@ -43,16 +43,19 @@ FILE_ENCODING_MAPPING = {
 
 def create_file_with_encoding(file_type):
     content = FILE_ENCODING_MAPPING[file_type]["content"]
-    file = io.BytesIO(content.encode(FILE_ENCODING_MAPPING[file_type]["encoding"]))
+    encoding = FILE_ENCODING_MAPPING[file_type]["encoding"]
+    file = io.BytesIO(content.encode(encoding))
     return file
 
 
 @pytest.mark.parametrize("file_type", FILE_ENCODING_MAPPING.keys())
 def test_detect_internal_encoding_with_valid_encoding_declarations(file_type):
-    file_with_encoding = create_file_with_encoding(file_type)
+    content = FILE_ENCODING_MAPPING[file_type]["content"]
     expected_encoding = FILE_ENCODING_MAPPING[file_type]["encoding"]
-    detected_encoding = detect_internal_encoding(file_with_encoding)
+    file_type, detected_encoding = detect_internal_encoding_from_bytes(content.encode(
+            expected_encoding))
     assert detected_encoding == expected_encoding
+    assert file_type == file_type
 
 
 FILE_WITHOUT_ENCODING_MAPPING = {
@@ -75,21 +78,22 @@ def create_file_without_encoding(file_type):
 
 @pytest.mark.parametrize("file_type", FILE_WITHOUT_ENCODING_MAPPING.keys())
 def test_detect_internal_encoding_with_no_encoding_declarations(file_type):
-    file_without_encoding = create_file_without_encoding(file_type)
-    detected_encoding = detect_internal_encoding(file_without_encoding)
-    assert detected_encoding is None
+    content = FILE_WITHOUT_ENCODING_MAPPING[file_type]
+    detect = detect_internal_encoding_from_bytes(content.encode(
+            "utf-8"))
+    assert detect == (None, None)
 
 
 def test_detect_internal_encoding_with_invalid_encoding_declarations():
-    detected_encoding = detect_internal_encoding(
-        io.BytesIO(b"# -*- coding: invalid -*-\n\nprint('Hello, World!')\n")
+    detected_encoding = detect_internal_encoding_from_bytes(
+        b"# -*- coding: invalid -*-\n\nprint('Hello, World!')\n"
     )
-    assert detected_encoding is None
+    assert detected_encoding == (None, None)
 
 
 def test_detect_internal_encoding_with_empty_file():
-    detected_encoding = detect_internal_encoding(io.BytesIO(b""))
-    assert detected_encoding is None
+    detected_encoding = detect_internal_encoding_from_bytes(b"")
+    assert detected_encoding == (None, None,)
 
 
 ENCODINGS = [
@@ -203,7 +207,7 @@ ENCODINGS = [
 CODING_FORMAT = "# -*- coding: {} -*-\n\nprint('Hello, World!')\n"
 
 
-def create_file_with_encoding2(encoding):
+def create_content_with_encoding(encoding):
     content = CODING_FORMAT.format(encoding).encode(encoding)
 
     if encoding == "utf_16_le":
@@ -215,72 +219,16 @@ def create_file_with_encoding2(encoding):
     elif encoding == "utf_32_be":
         content = codecs.BOM_UTF32_BE + content
 
-    file = io.BytesIO(content)
-    return file
+    return content
 
 
 @pytest.mark.parametrize("encoding", ENCODINGS)
 def test_detect_internal_encoding_with_different_encodings(encoding):
-    file_with_encoding = create_file_with_encoding2(encoding)
-    detected_encoding = detect_internal_encoding(file_with_encoding)
-    assert detected_encoding == encoding
+    content_with_encoding = create_content_with_encoding(encoding)
+    detected_encoding = detect_internal_encoding_from_bytes(content_with_encoding)
+    assert detected_encoding == ('Python', encoding)
 
 
 CONTENT = "# -*- coding: utf-8 -*-\n\nprint('Hello, World!')\n"
 
 
-def create_file_in_text_mode():
-    file = io.StringIO(CONTENT)
-    return file
-
-
-def create_file_in_binary_mode():
-    file = io.BytesIO(CONTENT.encode("utf-8"))
-    return file
-
-
-def test_detect_internal_encoding_with_text_mode():
-    file_in_text_mode = create_file_in_text_mode()
-    with pytest.raises(ValueError):
-        detected_encoding = detect_internal_encoding(file_in_text_mode)
-
-
-def test_detect_internal_encoding_with_binary_mode():
-    file_in_binary_mode = create_file_in_binary_mode()
-    detected_encoding = detect_internal_encoding(file_in_binary_mode)
-    assert detected_encoding == "utf-8"
-
-
-def create_file_at_beginning():
-    file = io.BytesIO(CONTENT.encode("utf-8"))
-    return file
-
-
-def create_file_at_middle():
-    file = io.BytesIO(CONTENT.encode("utf-8"))
-    file.seek(len(CONTENT) // 2)
-    return file
-
-
-def create_file_at_end():
-    file = io.BytesIO(CONTENT.encode("utf-8"))
-    file.seek(0, io.SEEK_END)
-    return file
-
-
-def test_detect_internal_encoding_at_beginning():
-    file_at_beginning = create_file_at_beginning()
-    detected_encoding = detect_internal_encoding(file_at_beginning)
-    assert detected_encoding == "utf-8"
-
-
-def test_detect_internal_encoding_at_middle():
-    file_at_middle = create_file_at_middle()
-    detected_encoding = detect_internal_encoding(file_at_middle)
-    assert detected_encoding == "utf-8"
-
-
-def test_detect_internal_encoding_at_end():
-    file_at_end = create_file_at_end()
-    detected_encoding = detect_internal_encoding(file_at_end)
-    assert detected_encoding == "utf-8"

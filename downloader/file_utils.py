@@ -79,41 +79,19 @@ def find_encoding_declaration(
     return None, None
 
 
-def _detect_internal_encoding(file_obj: IO[bytes]) -> tuple[str, str] | tuple[None, None]:
+def detect_internal_encoding_from_bytes(
+    bytes_content: bytes,
+) -> tuple[str, str] | tuple[None, None]:
     """
-    Retrieves the declared encoding from the initial content of a binary file, if present.
-
-    This function assesses the first 1024 bytes of the specified file to potentially
-    ascertain an encoding declaration. It does not guarantee the discovered encoding
-    matches the actual file encoding.
+    Determines the encoding from the bytes content, if an encoding declaration is present.
 
     Args:
-        file_obj: The binary file handle whose encoding is to be found.
+        bytes_content: Bytes to be assessed for an encoding declaration.
 
     Returns:
-        A tuple containing the file type and the declared encoding found within the
-        content. If no encoding declaration is found, returns a tuple with None values.
-
-    Raises:
-        UnicodeDecodeError: If the content decoding fails for all attempted encoding
-            types.
-
-    Note:
-        This function implements fallback encodings ('utf-8', 'ascii', 'cp875',
-        'cp1026', 'cp1140') if an encoding declaration is not identified. The
-        returned encoding is based solely on any encoding declaration found within
-        the decoded content, and might not align with the actual encoding of the file.
-
-    Example:
-        >>> import io
-        >>> file = io.BytesIO(b'<?xml version="1.0" encoding="utf-8"?>\\n<root>Some data here</root>')
-        >>> _detect_internal_encoding(file)
-        ('XML', 'utf-8')
+        A tuple containing the file type and the declared encoding found within the content.
+        If no encoding declaration is found, returns a tuple with None values.
     """
-    # Read the first 1024 bytes of the file
-    content = file_obj.read(1024)
-
-    # Check for Byte Order Mark (BOM) and decode the content accordingly
     encoding = None
     for bom, bom_encoding in [
         (codecs.BOM_UTF32_LE, "utf-32-le"),
@@ -122,101 +100,37 @@ def _detect_internal_encoding(file_obj: IO[bytes]) -> tuple[str, str] | tuple[No
         (codecs.BOM_UTF16_BE, "utf-16-be"),
         (codecs.BOM_UTF8, "utf-8-sig"),
     ]:
-        if content.startswith(bom):
+        if bytes_content.startswith(bom):
             encoding = bom_encoding
             break
 
     if encoding:
-        decoded_content = content.decode(encoding)
+        decoded_content = bytes_content.decode(encoding)
     else:
         try:
-            decoded_content = content.decode("utf-8")
+            decoded_content = bytes_content.decode("utf-8")
         except UnicodeDecodeError:
-            # If UTF-8 decoding fails, degrade gracefully to ASCII with error ignoring
-            decoded_content = content.decode("ascii", errors="ignore")
+            decoded_content = bytes_content.decode("ascii", errors="ignore")
 
     file_type, encoding = find_encoding_declaration(decoded_content)
 
     if encoding:
         return file_type, encoding
 
-    # If no encoding found, try decoding with EBCDIC variants to find encoding
-    # declarations
     fallback_encodings = ["cp875", "cp1026", "cp1140"]
     for fallback_encoding in fallback_encodings:
         try:
-            # Decode content using the fallback encoding
-            decoded_content = content.decode(fallback_encoding)
+            decoded_content = bytes_content.decode(fallback_encoding)
             file_type, encoding = find_encoding_declaration(decoded_content)
             if encoding:
                 return file_type, encoding
         except UnicodeDecodeError:
-            # Decoding failed, try the next encoding
             continue
 
-    # Return None if no encoding declaration is found after all attempts
     return None, None
 
 
-def is_binary_mode(file_obj: Any) -> bool:
-    if isinstance(file_obj, (io.BufferedIOBase, bytes, bytearray,
-                             memoryview)):  # Check if it has buffer interface - binary in python
-        return True
-    elif isinstance(file_obj, (str,
-                               io.TextIOBase)):  # Check if it's a string or a TextIOWrapper - textual data in python
-        return False
-    else:
-        # If the type of file is not determined yet (it's not part of standard Python types)
-        # then we check the nature of the buffer (at its base) if it's available
-        try:
-            return isinstance(file_obj.buffer, io.BufferedIOBase)
-        except AttributeError:
-            return False
-
-def detect_internal_encoding(file: IO[bytes]) -> str:
-    """
-    Detects and returns the declared encoding of a binary file based on its content.
-
-    This function is designed to work with files opened in binary mode. It reads the
-    beginning of the file to identify any declared encoding information. The main
-    purpose is to facilitate the discovery of file encoding to guide further processing
-    tasks, such as reading or parsing the file content accurately.
-
-    Args:
-        file (IO[bytes]): A file object opened in binary mode. The function seeks
-        to the beginning of the file before processing and resets the read pointer
-        to the start after completion.
-
-    Returns:
-        str: The declared encoding found within the file, if any. If the function
-        cannot identify a declared encoding, it returns `None`. This does not
-        necessarily mean the file is without encoding, just that no declaration was
-        found within the initial content examined.
-
-    Raises:
-        ValueError: If the provided file is not opened in binary mode. This function
-        relies on binary access to the file data for its operation.
-
-    Example:
-        >>> import io
-        >>> file = io.BytesIO(b'# -*- coding: utf-8 -*-\\nprint("Hello, world!")')
-        >>> detect_internal_encoding(file)
-        'utf-8'
-
-    Note:
-        For a detailed understanding of how encoding detection is performed, refer to
-        the docstring of `_detect_internal_encoding`.
-    """
-    if not is_binary_mode(file):
-        raise ValueError("File must be opened in binary mode")
-
-    file.seek(0)
-    file_type, encoding = _detect_internal_encoding(file)
-    file.seek(0)
-    return encoding
-
-
-def is_plain_text_file(file_obj: IO[bytes]) -> bool:
+def is_plain_text_file(file_obj: IO[bytes]) -> tuple[bool, bytes]:
     """
     Determines if a file is plain text or binary based on its content.
 
@@ -239,8 +153,7 @@ def is_plain_text_file(file_obj: IO[bytes]) -> bool:
         bool: True if the file is plain text, False otherwise.
 
     Note:
-        Empty files are considered plain text by this function. If you want to
-        treat empty files as binary, check the file size before calling this function.
+        Empty files are considered binary by this function.
     """
     allow_list = list(range(9, 11)) + list(range(13, 14)) + list(range(32, 256))
     # gray_list = [7, 8, 11, 12, 26, 27]
@@ -253,20 +166,25 @@ def is_plain_text_file(file_obj: IO[bytes]) -> bool:
     # Check if the file is empty and return True immediately if it is
     first_byte = file_obj.read(1)
     if not first_byte:
-        return True  # Return True for an empty file
+        return False, b""  # Return False for an empty file
+
+    first_chunk = None
 
     while True:
-        chunk = file_obj.read(4096)
+        chunk = file_obj.read(4095 if not first_chunk else 4096)
         if not chunk:
             break
+
+        if first_chunk is None:
+            first_chunk = first_byte + chunk
 
         for byte in chunk:
             if byte in allow_list:
                 allow_found = True
             elif byte in block_list:
-                return False
+                return False, first_chunk
 
-    return allow_found
+    return allow_found, first_chunk
 
 
 @dataclass
@@ -355,8 +273,9 @@ async def extract_text_files(
                 break
 
             with zip_file.open(member, "r") as file:
-                if is_plain_text_file(file):
-                    encoding = detect_internal_encoding(file)
+                is_plain_text, first_chunk = is_plain_text_file(file)
+                if is_plain_text:
+                    _, encoding = detect_internal_encoding_from_bytes(first_chunk)
                     if encoding:
                         content = file.read().decode(encoding)
                     else:
