@@ -23,7 +23,11 @@
           margin-bottom: 20px;
       }
 
-      /* Any other specific styles */
+      .glow {
+          box-shadow: 0 0 8px 2px greenyellow;
+      }
+
+
   </style>
 {% endblock %}
 
@@ -49,13 +53,8 @@
           {{ form.as_p }}
           <button type="submit">Download</button>
         </form>
-        <form method="post" action="{% url 'download_repo' %}">
-          {% csrf_token %}
-          <input type="hidden"
-                 name="repo_url"
-                 value="https://github.com/dmwyatt/gh_repo_download">
-          <button type="submit">Test it out with this site's repo!</button>
-        </form>
+        <button id="fillFormButton" type="button">Test it out with this site's repo!
+        </button>
       </div>
     </section>
 
@@ -137,6 +136,34 @@
          with GitHub's terms of service and any applicable licenses or permissions when
          downloading repositories.</p>
     </div>
+
+    <script>
+
+      document.getElementById('fillFormButton').addEventListener('click', function () {
+        const repoUrl = 'https://github.com/dmwyatt/gh_repo_download';
+        const inputField = document.querySelector('input[name="repo_url"]');
+        inputField.value = ''; 
+        let i = 0; 
+        const totalDuration = 425; 
+        const timeoutDuration = totalDuration / repoUrl.length;
+
+        inputField.classList.add('glow');
+
+        function typeEffect() {
+          if (i < repoUrl.length) {
+            inputField.value += repoUrl.charAt(i);
+            i++;
+            setTimeout(typeEffect, timeoutDuration);
+          } else {
+            inputField.classList.remove('glow');
+          }
+        }
+
+        typeEffect();
+      });
+
+    </script>
+
 
   </div>
 {% endblock content %}
