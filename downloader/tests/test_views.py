@@ -73,6 +73,7 @@ async def test_download_result_view_success(
         None,
         max_files=settings.MAX_FILE_COUNT,
         max_total_size=settings.MAX_TEXT_SIZE,
+        exclude_files=[],
     )
 
 
