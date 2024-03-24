@@ -23,7 +23,7 @@ jobs:
 
     - name: Compile dependencies
       run: |
-        uv pip compile requirements.in -o requirements.txt
+        uv pip compile requirements.in dev-requirements.in -o requirements.txt
 
     - name: Install dependencies
       run: |
