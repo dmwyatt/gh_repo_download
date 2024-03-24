@@ -1,3 +1,4 @@
+-c requirements.txt
 mdformat-gfm
 pytest
 pytest-asyncio
