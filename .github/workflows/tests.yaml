@@ -33,4 +33,5 @@ jobs:
       env:
         SECRET_KEY: im_so_secret
       run: |
+        python manage.py collectstatic --noinput
         pytest
