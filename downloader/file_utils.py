@@ -228,6 +228,7 @@ async def extract_text_files(
     zip_file: zipfile.ZipFile,
     max_files: int = 1000,
     max_total_size: int = 10 * 1024 * 1024,
+    exclude_files: list[str] = None,
 ) -> ExtractionResult:
     """
     Asynchronously extracts plain text files from a ZIP file.
@@ -248,6 +249,7 @@ async def extract_text_files(
             (default: 1000).
         max_total_size (int): The maximum total size (in bytes) of extracted text
             allowed (default: 10MB).
+        exclude_files (list): A list of file paths to be excluded from extraction.
 
     Returns:
         ExtractionResult: An `ExtractionResult` object containing:
@@ -270,6 +272,8 @@ async def extract_text_files(
           `max_files` or
           if the total size of extracted text exceeds the specified `max_total_size`.
     """
+    if exclude_files is None:
+        exclude_files = []
     loop = asyncio.get_event_loop()
 
     def extract_files():
@@ -283,6 +287,10 @@ async def extract_text_files(
             if len(text_files) >= max_files:
                 file_limit_reached = True
                 break
+            if member.filename in exclude_files:
+                logger.info(f"Excluding file: {member.filename}")
+                total_files -= 1
+                continue
 
             with zip_file.open(member, "r") as file:
                 is_plain_text, first_chunk = is_plain_text_file(file)

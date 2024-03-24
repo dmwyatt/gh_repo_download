@@ -59,10 +59,20 @@ async def download_result_view(request, username, repo_name):
         return redirect("download_repo")
 
     # Process the downloaded repository
+
     extraction = await extract_text_files(
         result.zip_file,
         max_files=settings.MAX_FILE_COUNT,
         max_total_size=settings.MAX_TEXT_SIZE,
+        # this file is excluded from the text extraction on our home repo because
+        # it's a little weird to include its contents in the download. People
+        # won't understand why it's there, LLMs will be confused, it will take up
+        # token limits, etc.  See
+        # `downloader.tests.test_repo_download.test_invalid_repository_url` for
+        # its real purpose.
+        exclude_files=["downloader/tests/data/gh_repo_dl_test.txt"]
+        if username == "dmwyatt" and repo_name == "gh_repo_download"
+        else [],
     )
     rendered_text = extraction.render_template(repo_name, "repo_template.txt")
     context = {
