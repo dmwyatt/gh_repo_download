@@ -33,8 +33,8 @@ jobs:
       env:
         SECRET_KEY: im_so_secret
       run: |
-        apt-get update -y
-        apt-get install tree -y
+        sudo apt-get update -y
+        sudo apt-get install tree -y
         tree
         exit(1)
 #        python manage.py collectstatic --noinput
