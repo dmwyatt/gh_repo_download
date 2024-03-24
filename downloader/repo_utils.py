@@ -59,20 +59,36 @@ async def download_repo(repo_url: str) -> DownloadResult:
         async with client.stream("GET", url) as response:
             if response.status_code == 404:
                 raise RepositoryDownloadError(f"Repository not found at {url}")
-            response.raise_for_status()
+
+            if not 200 <= response.status_code < 300:
+                logger.info(
+                    f"Failed to download repository from {url} because of "
+                    f"status code {response.status_code}."
+                )
+                raise RepositoryDownloadError(
+                    f"Failed to download repository from {url}"
+                )
 
             content_length_header = response.headers.get("Content-Length")
-            print(content_length_header)
+
             max_repo_size = settings.MAX_REPO_SIZE
-            if content_length_header and int(content_length_header) > max_repo_size:
-                csize = filesizeformat(content_length_header)
-                msize = filesizeformat(max_repo_size)
-                print(csize, msize)
-                raise RepositorySizeExceededError(
-                    f"Repository size exceeds the maximum allowed size. "
-                    f"Reported size: {csize}, "
-                    f"Max size: {msize}"
-                )
+            try:
+                parsed_content_length_header = int(content_length_header)
+            except (ValueError, TypeError):
+                pass
+            else:
+                if (
+                    parsed_content_length_header
+                    and parsed_content_length_header > max_repo_size
+                ):
+                    csize = filesizeformat(parsed_content_length_header)
+                    msize = filesizeformat(max_repo_size)
+
+                    raise RepositorySizeExceededError(
+                        f"Repository size exceeds the maximum allowed size. "
+                        f"Reported size: {csize}, "
+                        f"Max size: {msize}"
+                    )
             content = bytearray()
             async for chunk in response.aiter_bytes():
                 content.extend(chunk)
