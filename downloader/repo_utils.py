@@ -66,7 +66,8 @@ async def download_repo(repo_url: str) -> DownloadResult:
                     f"status code {response.status_code}."
                 )
                 raise RepositoryDownloadError(
-                    f"Failed to download repository from {url}"
+                    f"Failed to download repository from {url} because GitHub "
+                    f"returned status code {response.status_code}."
                 )
 
             content_length_header = response.headers.get("Content-Length")
