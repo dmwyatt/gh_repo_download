@@ -38,7 +38,7 @@ jobs:
         push: true
         tags: ${{ env.IMAGE_URL }}
 
-    - name: Deploy Image to CapRrover
+    - name: Deploy Image
       uses: caprover/deploy-from-github@v1.1.2
       with:
         server: "${{ secrets.CAPROVER_URL }}"
