@@ -22,6 +22,11 @@ async def download_repo_view(request):
             username = form.cleaned_data["username"]
             repo_name = form.cleaned_data["repo_name"]
             return redirect("download_result", username=username, repo_name=repo_name)
+        else:
+            context = {
+                "form": form,
+            }
+            return render(request, "downloader.html", context)
     else:
         form = RepositoryForm()
         error_message = request.session.pop("error_message", None)
