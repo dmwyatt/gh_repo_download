@@ -1,6 +1,6 @@
 .idea
 *.sqlite3
-requirements.txt
+*requirements.txt
 .env
 generated_files/
 /node_modules/
