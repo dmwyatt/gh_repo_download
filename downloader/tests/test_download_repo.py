@@ -79,3 +79,21 @@ async def test_download_repo_failed_request(httpx_mock: HTTPXMock):
 
     with pytest.raises(RepositoryDownloadError):
         await download_repo(repo_url)
+
+
+@pytest.mark.asyncio
+async def test_download_repo_with_empty_repository(httpx_mock: HTTPXMock):
+    repo_url = "https://example.com/repo"
+
+    # Create a valid zip file content
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, mode="w") as zip_file:
+        pass
+    zip_content = zip_buffer.getvalue()
+
+    httpx_mock.add_response(url=f"{repo_url}/archive/master.zip", content=zip_content)
+
+    result = await download_repo(repo_url)
+
+    assert isinstance(result, DownloadResult)
+    assert result.download_size == len(zip_content)
