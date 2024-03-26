@@ -111,3 +111,113 @@ here: `downloader.file_utils.detect_internal_encoding`.
 - The maximum size of repository that will be downloaded is in `settings.MAX_REPO_SIZE`.
 - We'll stop after processing `settings.MAX_FILE_COUNT` files from the repo.
 - We'll only deliver up to `settings.MAX_TEXT_SIZE` of text.
+
+## How to Contribute
+
+Thank you for your interest in contributing! Here are the steps to get started with
+development:
+
+### Step 1: Set Up Your Development Environment
+
+#### Prerequisites
+
+- Python 3.12 or later
+- Node.js 20 or later
+
+#### Fork and Clone the Repository
+
+1. **Fork the Repository:** Begin by forking the project to your GitHub account.
+1. **Clone Your Fork:** Clone your fork to your local environment:
+   ```bash
+   git clone https://github.com/your-username/gh_repo_download.git
+   ```
+
+#### Install Dependencies
+
+For managing Python dependencies, you can choose between `uv` and `pip-tools`. `uv` is
+much faster for installing dependencies, but you may be more comfortable with `pip-tools`.
+`uv` installation instructions [here](https://github.com/astral-sh/uv#getting-started).
+
+**Use a virtualenv!**
+
+Select the one that best fits your workflow:
+
+- **Using `uv`:**
+
+  - Install `uv` if you haven't already.
+  - Compile and sync dependencies:
+    ```bash
+    uv pip compile requirements.in dev-requirements.in -o requirements.txt
+    uv pip sync requirements.txt
+    ```
+
+- **Using `pip-tools`:**
+
+  - Install `pip-tools`:
+    ```bash
+    python3 -m pip install pip-tools
+    ```
+  - Compile and sync dependencies:
+    ```bash
+    pip-compile requirements.in dev-requirements.in -o requirements.txt
+    pip-sync requirements.txt
+    ```
+
+For Node.js dependencies:
+
+```bash
+npm install
+```
+
+### Step 2: Run the local server(s)
+
+#### Django
+
+1. **Run the Server:**
+
+   ```bash
+    python manage.py runserver
+   ```
+
+#### Vite
+
+1. **Run the Server:**
+
+   ```bash
+    npm run dev
+   ```
+
+### Step 2: Make Your Changes
+
+1. Create a new branch for your changes:
+
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+1. Implement your changes, adhering to the project's code style and guidelines.
+
+1. Test your changes thoroughly.
+
+1. Commit and push your changes:
+
+   ```bash
+   git commit -am 'Add some feature'
+   git push origin feature/your-feature-name
+   ```
+
+### Step 4: Submit Your Changes
+
+1. Open a Pull Request (PR) from your branch to the main repository. Provide a detailed
+   description of your changes and the impact they have.
+
+### Development Guidelines
+
+- Adhere to the coding standards (PEP 8 for Python; black for code formatting).
+- Ensure new features or fixes are accompanied by tests.
+- Update the documentation as necessary to reflect your changes.
+
+### Getting Help
+
+If you need assistance or have questions, feel free to open/continue
+[an issue on GitHub](https://github.com/dmwyatt/gh_repo_download/issues).
