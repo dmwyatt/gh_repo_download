@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load django_vite %}
 
 {% block title %}GitHub Repository Downloader{% endblock %}
 {% block extra_style %}
@@ -27,9 +28,39 @@
           box-shadow: 0 0 8px 2px greenyellow;
       }
 
+      .form-or {
+          font-weight: bold;
+          font-style: italic;
+      }
+
+      div.zip-file-upload {
+          display: flex;
+          flex-direction: row;
+          gap: 10px;
+          justify-items: start;
+      }
+      div.zip-file-upload button {
+          max-width: 150px;
+      }
+      .error-message {
+    color: #a94442; /* A general 'error' red color */
+    background-color: #f8d7da; /* Light red/pink background for contrast */
+    border: 1px solid #e0b4b4; /* Soft border color */
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+    display: none; /* Hidden by default */
+}
 
   </style>
 {% endblock %}
+
+{% block head %}
+  {% vite_hmr_client %}
+  {% vite_asset 'downloader/vite_assets/downloader.js' %}
+{% endblock head %}
+
 
 {% block content %}
   <div class="container">
@@ -50,8 +81,18 @@
       <div class="forms">
         <form method="post">
           {% csrf_token %}
-          {{ form.as_p }}
-          <button type="submit">Download</button>
+          {{ form.repo_url.label }}
+          {{ form.repo_url }}
+          <p class="form-or">—OR—</p>
+
+          {{ form.zip_file.label }}
+          <div class="zip-file-upload">
+            {{ form.zip_file }}
+            <button type="button" id="removeFileBtn" style="display: none;">Remove File
+            </button>
+          </div>
+          <div id="zipFileError" class="error-message" style="display:none;"></div>
+          <button type="submit" style="margin-top: 10px">Download</button>
         </form>
         <button id="fillFormButton" type="button">Test it out with this site's repo!
         </button>
@@ -142,9 +183,9 @@
       document.getElementById('fillFormButton').addEventListener('click', function () {
         const repoUrl = 'https://github.com/dmwyatt/gh_repo_download';
         const inputField = document.querySelector('input[name="repo_url"]');
-        inputField.value = ''; 
-        let i = 0; 
-        const totalDuration = 425; 
+        inputField.value = '';
+        let i = 0;
+        const totalDuration = 425;
         const timeoutDuration = totalDuration / repoUrl.length;
 
         inputField.classList.add('glow');
