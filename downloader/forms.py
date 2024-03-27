@@ -22,22 +22,37 @@ class RepositoryForm(forms.Form):
     repo_url = forms.URLField(
         label="GitHub Repository URL",
         validators=[validate_repo_url],
-        required=True,
+        required=False,
         widget=forms.URLInput(
             attrs={
                 "pattern": r"https?://github\.com/.+",
-                "title": "Please enter a valid GitHub URL e.g. 'https://github.com/dmwyatt/gh_repo_download'",
+                "title": "Please enter a valid GitHub URL e.g. 'https://github.com/username/repo'",
             }
         ),
         assume_scheme="https",
     )
+    zip_file = forms.FileField(
+        label="ZIP File",
+        required=False,
+        widget=forms.ClearableFileInput(attrs={"accept": ".zip"}),
+    )
 
     def clean(self):
-        # make a "clean" url.  We only want the domain, username, and repo name
         cleaned_data = super().clean()
         repo_url = cleaned_data.get("repo_url")
+        zip_file = cleaned_data.get("zip_file")
+
+        if not repo_url and not zip_file:
+            raise forms.ValidationError(
+                "Please provide either a GitHub repository " "URL or a ZIP file."
+            )
+
+        if repo_url and zip_file:
+            raise forms.ValidationError(
+                "Please provide either a GitHub repository "
+                "URL or a ZIP file, not both."
+            )
         if repo_url:
-            parsed = urlparse(repo_url)
             if repo_url:
                 parsed = urlparse(repo_url)
                 path_parts = parsed.path.strip("/").split("/")
