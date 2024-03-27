@@ -42,12 +42,14 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_vite",
+    "debug_toolbar",
     "downloader.apps.DownloaderConfig",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -160,18 +162,13 @@ STORAGES = {
 
 SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
 
+INTERNAL_IPS = ["127.0.0.1"]
+
 MAX_REPO_SIZE = 10 * 1024 * 1024  # size of zip file downloaded from github
 MAX_FILE_COUNT = 1000  # number of files extracted from the zip file
 MAX_TEXT_SIZE = 10 * 1024 * 1024  # size of text to be extracted from the files
 
 RESTRICTED_FILE_EXTENSIONS = [".exe", ".dll", ".so", ".pyc"]
-
-if DEBUG:
-    GENERATED_FILES_DIR = BASE_DIR / "generated_files"
-else:
-    GENERATED_FILES_DIR = (
-        BASE_DIR.parent / env("GENERATED_FILES_DIR", default="../generated_files")
-    ).resolve()
 
 
 DJANGO_VITE = {"default": {"dev_mode": DEBUG}}
