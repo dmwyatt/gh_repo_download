@@ -39,19 +39,32 @@
           gap: 10px;
           justify-items: start;
       }
+
       div.zip-file-upload button {
           max-width: 150px;
       }
+
+      .error-message-def-hidden {
+          color: #a94442; /* A general 'error' red color */
+          background-color: #f8d7da; /* Light red/pink background for contrast */
+          border: 1px solid #e0b4b4; /* Soft border color */
+          padding: 10px;
+          margin-top: 10px;
+          border-radius: 4px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+          display: none; /* Hidden by default */
+      }
+      
       .error-message {
-    color: #a94442; /* A general 'error' red color */
-    background-color: #f8d7da; /* Light red/pink background for contrast */
-    border: 1px solid #e0b4b4; /* Soft border color */
-    padding: 10px;
-    margin-top: 10px;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
-    display: none; /* Hidden by default */
-}
+          color: #a94442; /* A general 'error' red color */
+          background-color: #f8d7da; /* Light red/pink background for contrast */
+          border: 1px solid #e0b4b4; /* Soft border color */
+          padding: 10px;
+          margin-top: 10px;
+          border-radius: 4px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+      }
+      
 
   </style>
 {% endblock %}
@@ -78,8 +91,14 @@
       {% if error_message %}
         <p class="error-message">{{ error_message }}</p>
       {% endif %}
+      {% if form.non_field_errors %}
+        {% for error in form.non_field_errors %}
+          <p class="error-message">{{ error }}</p>
+        {% endfor %}
+      {% endif %}
+
       <div class="forms">
-        <form method="post">
+        <form method="post" enctype="multipart/form-data">
           {% csrf_token %}
           {{ form.repo_url.label }}
           {{ form.repo_url }}
@@ -91,7 +110,7 @@
             <button type="button" id="removeFileBtn" style="display: none;">Remove File
             </button>
           </div>
-          <div id="zipFileError" class="error-message" style="display:none;"></div>
+          <div id="zipFileError" class="error-message-def-hidden" style="display:none;"></div>
           <button type="submit" style="margin-top: 10px">Download</button>
         </form>
         <button id="fillFormButton" type="button">Test it out with this site's repo!
