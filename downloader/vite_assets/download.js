@@ -37,7 +37,7 @@ function countTokens(text) {
   }
   return tokenCount;
 }
-function main() {
+function download() {
 
   // Format numbers with commas
   const numberSpans = document.querySelectorAll(".locale-number");
@@ -58,4 +58,4 @@ function main() {
   tokenCountSpan.textContent = tokenCount.toLocaleString();
 }
 
-main();
+download();
