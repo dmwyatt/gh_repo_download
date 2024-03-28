@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load django_vite %}
 
 {% block title %}GitHub Repository Downloader{% endblock %}
 {% block extra_style %}
@@ -27,9 +28,52 @@
           box-shadow: 0 0 8px 2px greenyellow;
       }
 
+      div.zip-file-upload {
+          display: flex;
+          flex-direction: row;
+          gap: 10px;
+          justify-items: start;
+      }
+
+      div.zip-file-upload button {
+          max-width: 150px;
+      }
+
+      .error-message-def-hidden {
+          color: #a94442; /* A general 'error' red color */
+          background-color: #f8d7da; /* Light red/pink background for contrast */
+          border: 1px solid #e0b4b4; /* Soft border color */
+          padding: 10px;
+          margin-top: 10px;
+          border-radius: 4px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+          display: none; /* Hidden by default */
+      }
+
+      .error-message {
+          color: #a94442; /* A general 'error' red color */
+          background-color: #f8d7da; /* Light red/pink background for contrast */
+          border: 1px solid #e0b4b4; /* Soft border color */
+          padding: 10px;
+          margin-top: 10px;
+          border-radius: 4px;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+      }
+      
+      button {
+          max-width: 250px
+      }
+
 
   </style>
 {% endblock %}
+
+{% block head %}
+  {% vite_hmr_client %}
+  {% vite_asset 'downloader/vite_assets/downloader.js' %}
+  {{ MAX_REPO_SIZE|json_script:"max-repo-size" }}
+{% endblock head %}
+
 
 {% block content %}
   <div class="container">
@@ -47,14 +91,53 @@
       {% if error_message %}
         <p class="error-message">{{ error_message }}</p>
       {% endif %}
+      {% if repo_url_form.non_field_errors %}
+        {% for error in repo_url_form.non_field_errors %}
+          <p class="error-message">{{ error }}</p>
+        {% endfor %}
+      {% endif %}
+
       <div class="forms">
         <form method="post">
           {% csrf_token %}
-          {{ form.as_p }}
-          <button type="submit">Download</button>
-        </form>
+          {{ repo_url_form.repo_url.label }}
+          {{ repo_url_form.repo_url }}
+          {% if repo_url_form.repo_url.error %}
+            <div class="error-message">
+              {{ repo_url_form.repo_url.errors }}
+            </div>
+          {% endif %}
+          <button type="submit" style="margin-top: 10px">Submit</button>
         <button id="fillFormButton" type="button">Test it out with this site's repo!
+        
+        </form>
         </button>
+
+        {% if zip_file_form.non_field_errors %}
+          {% for error in zip_file_form.non_field_errors %}
+            <p class="error-message">{{ error }}</p>
+          {% endfor %}
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          {{ zip_file_form.zip_file.label }}
+          <div class="zip-file-upload">
+            {{ zip_file_form.zip_file }}
+            <button type="button" id="removeFileBtn" style="display: none;">Remove File
+            </button>
+          </div>
+          {% if zip_file_form.zip_file.errors %}
+            <div class="error-message">
+              {{ zip_file_form.zip_file.errors }}
+            </div>
+          {% endif %}
+          <div id="zipFileError"
+               class="error-message-def-hidden"
+               style="display:none;"></div>
+          <button type="submit" style="margin-top: 10px">Submit</button>
+        </form>
+
       </div>
     </section>
 
@@ -142,9 +225,9 @@
       document.getElementById('fillFormButton').addEventListener('click', function () {
         const repoUrl = 'https://github.com/dmwyatt/gh_repo_download';
         const inputField = document.querySelector('input[name="repo_url"]');
-        inputField.value = ''; 
-        let i = 0; 
-        const totalDuration = 425; 
+        inputField.value = '';
+        let i = 0;
+        const totalDuration = 425;
         const timeoutDuration = totalDuration / repoUrl.length;
 
         inputField.classList.add('glow');

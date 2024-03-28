@@ -13,7 +13,8 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        main: resolve("./downloader/vite_assets/main.js"),
+        downloader: resolve("./downloader/vite_assets/downloader.js"),
+        download: resolve("./download/vite_assets/download.js"),
       },
     },
   },

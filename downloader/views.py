@@ -2,11 +2,13 @@ import logging
 from urllib.parse import quote
 
 from django.conf import settings
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
 
-from .file_utils import extract_text_files
-from .forms import RepositoryForm
+from .file_utils import ExtractionResult, extract_text_files
+from .forms import RepositoryURLForm, ZipFileForm
 from .repo_utils import (
+    DownloadResult,
     RepositoryDownloadError,
     RepositorySizeExceededError,
     download_repo,
@@ -15,29 +17,50 @@ from .repo_utils import (
 logger = logging.getLogger(__name__)
 
 
-async def download_repo_view(request):
-    if request.method == "POST":
-        form = RepositoryForm(request.POST)
-        if form.is_valid():
-            username = form.cleaned_data["username"]
-            repo_name = form.cleaned_data["repo_name"]
-            return redirect("download_result", username=username, repo_name=repo_name)
-        else:
-            context = {
-                "form": form,
-            }
-            return render(request, "downloader.html", context)
-    else:
-        form = RepositoryForm()
-        error_message = request.session.pop("error_message", None)
-        context = {
-            "form": form,
-            "error_message": error_message,
-            "MAX_REPO_SIZE": settings.MAX_REPO_SIZE,
-            "MAX_FILE_COUNT": settings.MAX_FILE_COUNT,
-            "MAX_TEXT_SIZE": settings.MAX_TEXT_SIZE,
-        }
+async def download_repo_view(request: HttpRequest) -> HttpResponse:
+    context = {
+        "repo_url_form": RepositoryURLForm(),
+        "zip_file_form": ZipFileForm(),
+        "MAX_REPO_SIZE": settings.MAX_REPO_SIZE,
+    }
 
+    if request.method == "POST":
+        if "repo_url" in request.POST:
+            return _handle_repo_url_form(request, context)
+        elif "zip_file" in request.FILES:
+            return await _handle_zip_file_form(request, context)
+        else:
+            return redirect("download_repo")
+    else:
+        return render(request, "downloader.html", context)
+
+
+def _handle_repo_url_form(request: HttpRequest, context):
+    repo_url_form = RepositoryURLForm(request.POST)
+    if repo_url_form.is_valid():
+        _, username, repo_name = repo_url_form.cleaned_data["repo_url"]
+        return redirect("download_result", username=username, repo_name=repo_name)
+    else:
+        context["repo_url_form"] = repo_url_form
+        return render(request, "downloader.html", context)
+
+
+async def _handle_zip_file_form(request: HttpRequest, context):
+    zip_file_form = ZipFileForm(request.POST, request.FILES)
+    if zip_file_form.is_valid():
+        file, name, size, uncompressed_size = zip_file_form.cleaned_data["zip_file"]
+        extraction = await extract_text_files(file)
+        # when the user uploads a zip file, we don't redirect to another page with
+        # the results, we render the results template on the same url.
+        return render(
+            request,
+            "download.html",
+            _get_extraction_context(
+                extraction, name, DownloadResult(file, size, uncompressed_size)
+            ),
+        )
+    else:
+        context["zip_file_form"] = zip_file_form
         return render(request, "downloader.html", context)
 
 
@@ -74,8 +97,17 @@ async def download_result_view(request, username, repo_name):
         if username == "dmwyatt" and repo_name == "gh_repo_download"
         else [],
     )
+
+    return render(
+        request, "download.html", _get_extraction_context(extraction, repo_name, result)
+    )
+
+
+def _get_extraction_context(
+    extraction: ExtractionResult, repo_name: str, result: DownloadResult
+):
     rendered_text = extraction.render_template(repo_name, "repo_template.txt")
-    context = {
+    return {
         "repo_name": repo_name,
         "encoded_file_content": quote(rendered_text),
         "download_file_size": len(rendered_text),
@@ -84,5 +116,3 @@ async def download_result_view(request, username, repo_name):
         "zip_file_size": result.download_size,
         "total_uncompressed_size": result.uncompressed_size,
     }
-
-    return render(request, "download.html", context)
