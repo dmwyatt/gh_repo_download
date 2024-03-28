@@ -17,7 +17,8 @@ def test_download_repo_view_get(client):
     response = client.get(url)
     assert response.status_code == 200
     assert "downloader.html" in [t.name for t in response.templates]
-    assert "form" in response.context
+    assert "repo_url_form" in response.context
+    assert "zip_file_form" in response.context
 
 
 def test_download_repo_view_post_valid_form(client):
@@ -35,8 +36,8 @@ def test_download_repo_view_post_invalid_form(client):
     data = {"repo_url": "invalid_url"}
     response = client.post(url, data)
     assert response.status_code == 200
-    assert "form" in response.context
-    assert response.context["form"].errors
+    assert "repo_url_form" in response.context
+    assert response.context["repo_url_form"].errors
 
 
 @pytest.mark.asyncio
