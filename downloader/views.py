@@ -32,6 +32,8 @@ async def download_repo_view(request: HttpRequest) -> HttpResponse:
         else:
             return redirect("download_repo")
     else:
+        error_message = request.session.pop("error_message", None)
+        context["error_message"] = error_message
         return render(request, "downloader.html", context)
 
 
