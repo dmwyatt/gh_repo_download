@@ -27,7 +27,7 @@
       .glow {
           box-shadow: 0 0 8px 2px greenyellow;
       }
-      
+
       div.zip-file-upload {
           display: flex;
           flex-direction: row;
@@ -58,6 +58,10 @@
           margin-top: 10px;
           border-radius: 4px;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+      }
+      
+      button {
+          max-width: 250px
       }
 
 
@@ -104,16 +108,17 @@
             </div>
           {% endif %}
           <button type="submit" style="margin-top: 10px">Submit</button>
-        </form>
         <button id="fillFormButton" type="button">Test it out with this site's repo!
-        </button>
         
+        </form>
+        </button>
+
         {% if zip_file_form.non_field_errors %}
           {% for error in zip_file_form.non_field_errors %}
             <p class="error-message">{{ error }}</p>
           {% endfor %}
         {% endif %}
-      
+
         <form method="post" enctype="multipart/form-data">
           {% csrf_token %}
           {{ zip_file_form.zip_file.label }}
@@ -132,7 +137,7 @@
                style="display:none;"></div>
           <button type="submit" style="margin-top: 10px">Submit</button>
         </form>
-      
+
       </div>
     </section>
 
