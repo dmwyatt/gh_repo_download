@@ -1,14 +1,15 @@
 ## What is this project?
 
 This project allows you to download and view the contents of a GitHub repository as a
-single text file.
+single text file. It also supports uploading local ZIP files containing text files and
+presenting their contents as a single text file.
 
 ## Why was this tool created?
 
 This tool was created to make it easy to share context with LLM chatbots like ChatGPT,
-Claude, and Gemini. By downloading a GitHub repository as a single text file, you can
-easily provide the chatbot with the necessary context to understand and discuss the
-contents of the repository.
+Claude, and Gemini. By downloading a GitHub repository or uploading a ZIP file as a single
+text file, you can easily provide the chatbot with the necessary context to understand and
+discuss the contents of the repository.
 
 Here are a few examples of how this tool can be useful when interacting with chatbots:
 
@@ -109,7 +110,8 @@ here: `downloader.file_utils.detect_internal_encoding`.
 ## Configurations
 
 - The maximum size of repository that will be downloaded is in `settings.MAX_REPO_SIZE`.
-- We'll stop after processing `settings.MAX_FILE_COUNT` files from the repo.
+- The maximum size of ZIP file that can be uploaded is in `settings.MAX_REPO_SIZE`.
+- We'll stop after processing `settings.MAX_FILE_COUNT` files from the repo or ZIP file.
 - We'll only deliver up to `settings.MAX_TEXT_SIZE` of text.
 
 ## How to Contribute
@@ -221,3 +223,46 @@ npm install
 
 If you need assistance or have questions, feel free to open/continue
 [an issue on GitHub](https://github.com/dmwyatt/gh_repo_download/issues).
+
+## How to use
+
+### Downloading a GitHub repository:
+
+1. Enter the URL of a GitHub repository in the form.
+1. Click the "Submit" button.
+1. The site will process the repository and generate a downloadable text file.
+1. On the next page, click the "Download file" link to save the text file locally.
+
+### Uploading a ZIP file:
+
+1. Select a ZIP file containing the desired text files using the file input field.
+1. Click the "Submit" button to upload and process the ZIP file.
+1. The site will extract the text files from the ZIP and generate a downloadable text
+   file.
+1. On the next page, click the "Download file" link to save the text file locally.
+
+## Limitations and Considerations
+
+- The maximum size of repositories that can be downloaded is 10.0 MB.
+- The maximum size of ZIP files that can be uploaded is 10.0 MB.
+- Only text files from the repository or ZIP file will be included in the downloaded file.
+- The downloaded file is a concatenation of the text files from the repository or ZIP
+  file.
+- We'll stop after processing 1000 files from the repo or ZIP file.
+- We'll only deliver up to 10.0 MB of text.
+
+## FAQ
+
+**Q: What types of files are included in the download?**
+
+A: Only text files from the repository or ZIP file are included in the downloaded file.
+
+**Q: What is the size limit for the repositories that can be downloaded?**
+
+A: The maximum size limit for repositories is 10.0 MB. Repositories exceeding this limit
+cannot be downloaded.
+
+**Q: What is the size limit for the ZIP files that can be uploaded?**
+
+A: The maximum size limit for ZIP files is 10.0 MB. ZIP files exceeding this limit cannot
+be uploaded.
