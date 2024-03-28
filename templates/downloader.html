@@ -64,7 +64,7 @@
           border-radius: 4px;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
       }
-      
+
 
   </style>
 {% endblock %}
@@ -91,30 +91,52 @@
       {% if error_message %}
         <p class="error-message">{{ error_message }}</p>
       {% endif %}
-      {% if form.non_field_errors %}
-        {% for error in form.non_field_errors %}
+      {% if repo_url_form.non_field_errors %}
+        {% for error in repo_url_form.non_field_errors %}
           <p class="error-message">{{ error }}</p>
         {% endfor %}
       {% endif %}
 
       <div class="forms">
-        <form method="post" enctype="multipart/form-data">
+        <form method="post">
           {% csrf_token %}
-          {{ form.repo_url.label }}
-          {{ form.repo_url }}
-          <p class="form-or">—OR—</p>
-
-          {{ form.zip_file.label }}
-          <div class="zip-file-upload">
-            {{ form.zip_file }}
-            <button type="button" id="removeFileBtn" style="display: none;">Remove File
-            </button>
-          </div>
-          <div id="zipFileError" class="error-message-def-hidden" style="display:none;"></div>
-          <button type="submit" style="margin-top: 10px">Download</button>
+          {{ repo_url_form.repo_url.label }}
+          {{ repo_url_form.repo_url }}
+          {% if repo_url_form.repo_url.error %}
+            <div class="error-message">
+              {{ repo_url_form.repo_url.errors }}
+            </div>
+          {% endif %}
+          <button type="submit" style="margin-top: 10px">Submit</button>
         </form>
         <button id="fillFormButton" type="button">Test it out with this site's repo!
         </button>
+        
+        {% if zip_file_form.non_field_errors %}
+          {% for error in zip_file_form.non_field_errors %}
+            <p class="error-message">{{ error }}</p>
+          {% endfor %}
+        {% endif %}
+      
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          {{ zip_file_form.zip_file.label }}
+          <div class="zip-file-upload">
+            {{ zip_file_form.zip_file }}
+            <button type="button" id="removeFileBtn" style="display: none;">Remove File
+            </button>
+          </div>
+          {% if zip_file_form.zip_file.errors %}
+            <div class="error-message">
+              {{ zip_file_form.zip_file.errors }}
+            </div>
+          {% endif %}
+          <div id="zipFileError"
+               class="error-message-def-hidden"
+               style="display:none;"></div>
+          <button type="submit" style="margin-top: 10px">Submit</button>
+        </form>
+      
       </div>
     </section>
 
