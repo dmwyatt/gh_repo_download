@@ -67,6 +67,7 @@
 {% block head %}
   {% vite_hmr_client %}
   {% vite_asset 'downloader/vite_assets/downloader.js' %}
+  {{ MAX_REPO_SIZE|json_script:"max-repo-size" }}
 {% endblock head %}
 
 

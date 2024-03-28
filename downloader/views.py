@@ -21,6 +21,7 @@ async def download_repo_view(request: HttpRequest) -> HttpResponse:
     context = {
         "repo_url_form": RepositoryURLForm(),
         "zip_file_form": ZipFileForm(),
+        "MAX_REPO_SIZE": settings.MAX_REPO_SIZE,
     }
 
     if request.method == "POST":

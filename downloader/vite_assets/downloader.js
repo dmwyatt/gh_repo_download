@@ -27,15 +27,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (file) {
       // Size check
-      if (file.size > 10 * 1024 * 1024) {
-        updateZipFileError('The file is too large to process here.');
-        return; // Exit the function
+      const max_size = JSON.parse(document.getElementById('max-repo-size').textContent)
+      console.log("max_size", max_size)
+      if (file.size > max_size) {
+        updateZipFileError('This file is too large to process here.');
+        return;
       }
 
-      // Magic number check
       const reader = new FileReader();
       reader.onload = function(e) {
         const bytes = new Uint8Array(e.target.result);
+        // Magic number check to see if it's a valid ZIP file
+
         if (bytes[0] === 0x50 && bytes[1] === 0x4B && bytes[2] === 0x03 && bytes[3] === 0x04) {
           // Proceed to read the entire file and attempt to unzip
           const fullFileReader = new FileReader();
@@ -44,7 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
               unzipSync(new Uint8Array(e.target.result)); // Try to unzip
               // If no error, optionally update UI to indicate success
             } catch (error) {
-              updateZipFileError('Valid ZIP file, but unable to unzip.');
+              updateZipFileError('Unable to unzip.');
             }
           };
           fullFileReader.readAsArrayBuffer(file);
