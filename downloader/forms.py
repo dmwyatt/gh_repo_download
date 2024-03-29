@@ -66,6 +66,8 @@ class ZipFileForm(forms.Form):
     zip_file = forms.FileField(
         label="ZIP File",
         validators=[validate_file_size, validate_is_zip],
+        # restrict to ZIP files
+        widget=forms.FileInput(attrs={"accept": ".zip"}),
     )
 
     def clean_zip_file(self):
