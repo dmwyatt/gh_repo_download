@@ -1,3 +1,4 @@
+import "vite/modulepreload-polyfill";
 import { unzipSync } from 'fflate';
 
 document.addEventListener('DOMContentLoaded', function() {
