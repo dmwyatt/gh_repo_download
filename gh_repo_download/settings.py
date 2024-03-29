@@ -64,8 +64,8 @@ MIDDLEWARE = [
 if DEBUG:
     # insert debug toolbar middleware after white noise
     MIDDLEWARE.insert(
-            MIDDLEWARE.index("whitenoise.middleware.WhiteNoiseMiddleware") + 1,
-            "debug_toolbar.middleware.DebugToolbarMiddleware"
+        MIDDLEWARE.index("whitenoise.middleware.WhiteNoiseMiddleware") + 1,
+        "debug_toolbar.middleware.DebugToolbarMiddleware",
     )
 
 ROOT_URLCONF = "gh_repo_download.urls"
