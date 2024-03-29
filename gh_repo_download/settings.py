@@ -42,14 +42,17 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django_vite",
-    "debug_toolbar",
     "downloader.apps.DownloaderConfig",
 ]
+
+if DEBUG:
+    INSTALLED_APPS.append(
+        "debug_toolbar",
+    )
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -57,6 +60,13 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+if DEBUG:
+    # insert debug toolbar middleware after white noise
+    MIDDLEWARE.insert(
+            MIDDLEWARE.index("whitenoise.middleware.WhiteNoiseMiddleware") + 1,
+            "debug_toolbar.middleware.DebugToolbarMiddleware"
+    )
 
 ROOT_URLCONF = "gh_repo_download.urls"
 
