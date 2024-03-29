@@ -14,7 +14,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         downloader: resolve("./downloader/vite_assets/downloader.js"),
-        download: resolve("./download/vite_assets/download.js"),
+        download: resolve("./downloader/vite_assets/download.js"),
       },
     },
   },
