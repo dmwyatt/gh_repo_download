@@ -113,7 +113,7 @@
           {% csrf_token %}
           {{ repo_url_form.repo_url.label }}
           {{ repo_url_form.repo_url }}
-          {% if repo_url_form.repo_url.error %}
+          {% if repo_url_form.repo_url.errors %}
             <div class="error-message">
               {{ repo_url_form.repo_url.errors }}
             </div>
