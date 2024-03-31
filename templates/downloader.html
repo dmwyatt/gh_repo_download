@@ -90,14 +90,6 @@
     <h1>GitHub Repository Downloader</h1>
 
     <section>
-      {% if messages %}
-        <ul class="messages">
-          {% for message in messages %}
-            <li
-                {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-          {% endfor %}
-        </ul>
-      {% endif %}
       {% if error_message %}
         <p class="error-message">{{ error_message }}</p>
       {% endif %}
