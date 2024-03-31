@@ -59,11 +59,21 @@
           border-radius: 4px;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
       }
-      
+
       button {
           max-width: 250px
       }
 
+      #manualGitignore {
+          min-height: 100px;
+          max-height: 300px;
+          overflow-y: auto;
+      }
+
+      .instructions {
+          font-size: 14px;
+          margin-bottom: 5px;
+      }
 
   </style>
 {% endblock %}
@@ -98,6 +108,7 @@
       {% endif %}
 
       <div class="forms">
+
         <form method="post">
           {% csrf_token %}
           {{ repo_url_form.repo_url.label }}
@@ -108,10 +119,9 @@
             </div>
           {% endif %}
           <button type="submit" style="margin-top: 10px">Submit</button>
-        <button id="fillFormButton" type="button">Test it out with this site's repo!
-        
+          <button id="fillFormButton" type="button">Test it out with this site's repo!
+          </button>
         </form>
-        </button>
 
         {% if zip_file_form.non_field_errors %}
           {% for error in zip_file_form.non_field_errors %}
@@ -136,6 +146,50 @@
                class="error-message-def-hidden"
                style="display:none;"></div>
           <button type="submit" style="margin-top: 10px">Submit</button>
+        </form>
+
+        <form id="folderForm">
+          <div>
+            <label for="folderInput">Select Folder:</label>
+            <input type="file" id="folderInput" webkitdirectory directory/>
+          </div>
+
+          <div>
+            <p class="instructions">
+              Enter additional .gitignore rules to exclude specific files or directories
+              from the selected folder. Each rule should be on a separate line.
+            </p>
+            <textarea id="manualGitignore" name="manual_gitignore">
+node_modules/
+.venv/
+venv/
+.git/
+.idea/
+*.log
+*.pyc
+*.swp
+dist/
+build/
+coverage/
+*.o
+*.a
+*.so
+*.bin
+*.exe
+*.dll
+.env
+.env.*
+.vscode/
+.sublime-project
+.sublime-workspace
+.DS_Store
+Thumbs.db
+*~
+*.bak
+          </textarea>
+          </div>
+
+          <button type="submit">Submit Folder</button>
         </form>
 
       </div>

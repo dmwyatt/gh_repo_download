@@ -145,28 +145,32 @@ def seek_to_start(file_obj):
 
 def is_plain_text_file(file_obj: IO[bytes]) -> tuple[bool, bytes]:
     """
-    Determines if a file is plain text or binary based on its content.
+    Checks whether a file is a plain text or a binary file by analyzing its contents.
 
-    This function implements the plain text detection algorithm used in zlib,
-    which categorizes a file as plain text if it contains at least one byte
-    from the allow list (textual bytecodes) and no byte from the block list
-    (undesired, non-textual bytecodes).
+    The function utilizes an algorithm used in zlib to infer the file type. It classifies
+    a file as plain text if it contains at least one byte from the allowed list,
+    representing textual bytecodes, and does not contain any byte from the blocked list,
+    which consists of undesired, non-textual bytecodes. The rationale behind the
+    algorithm is that most plain text files are composed of printable ASCII characters
+    and common control characters, whereas binary files are likely to contain control
+    characters, including null bytes.
 
-    The algorithm is based on the idea that most plain text files consist of
-    printable ASCII characters and common control characters, while binary
-    files tend to contain control characters, especially null bytes.
-
-    More information about the algorithm can be found at:
+    A thorough explanation of the algorithm can be located at:
     https://github.com/madler/zlib/blob/8678871f18f4dd51101a9db1e37791f975969079/doc/txtvsbin.txt
 
     Args:
-        file_obj (BinaryIO): The file object to be checked.
+        file_obj (IO[bytes]): The file object to be checked.
 
     Returns:
-        bool: True if the file is plain text, False otherwise.
+        tuple[bool, bytes]: A tuple containing two items:
+            - A boolean that indicates if the file is plain text (True) or binary (False).
+            - A byte string of the first chunk of the file.
+
+    Raises:
+        IOError: If there's a problem in reading the file.
 
     Note:
-        Empty files are considered binary by this function.
+        The algorithm considers an empty file as a binary.
     """
     allow_list = list(range(9, 11)) + list(range(13, 14)) + list(range(32, 256))
     # gray_list = [7, 8, 11, 12, 26, 27]
@@ -180,15 +184,18 @@ def is_plain_text_file(file_obj: IO[bytes]) -> tuple[bool, bytes]:
         if not first_byte:
             return False, b""  # Return False for an empty file
 
+        on_first_chunk = True
         first_chunk = None
 
         while True:
-            chunk = file_obj.read(4095 if not first_chunk else 4096)
+            chunk = file_obj.read(4095 if on_first_chunk else 4096)
             if not chunk:
                 break
 
-            if first_chunk is None:
-                first_chunk = first_byte + chunk
+            if on_first_chunk:
+                chunk = first_byte + chunk
+                on_first_chunk = False
+                first_chunk = chunk
 
             for byte in chunk:
                 if byte in allow_list:
