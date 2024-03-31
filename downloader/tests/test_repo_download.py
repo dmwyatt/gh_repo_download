@@ -1,15 +1,22 @@
 import os
 import urllib
 
+import pytest
 from django.urls import reverse
 
 
-def test_repository_downloader_integration(client):
-    url = reverse("download_repo")
-    test_repo_url = "https://github.com/dmwyatt/gh_repo_dl_test"
+@pytest.fixture
+def expected_content():
     expected_content_file = os.path.join(
         os.path.dirname(__file__), "data", "gh_repo_dl_test.txt"
     )
+    with open(expected_content_file, "r") as f:
+        return f.read()
+
+
+def test_repository_downloader_integration(client, expected_content):
+    url = reverse("download_repo")
+    test_repo_url = "https://github.com/dmwyatt/gh_repo_dl_test"
 
     # Send a POST request to the view with the test repository URL
     response = client.post(url, {"repo_url": test_repo_url}, follow=True)
@@ -29,10 +36,6 @@ def test_repository_downloader_integration(client):
 
     # Decode the URL-encoded content
     decoded_content = urllib.parse.unquote(data_uri)
-
-    # Read the expected content from the file
-    with open(expected_content_file, "r") as file:
-        expected_content = file.read()
 
     # Compare the decoded content with the expected content
     assert decoded_content == expected_content
