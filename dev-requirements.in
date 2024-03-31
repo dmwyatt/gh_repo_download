@@ -1,6 +1,7 @@
+django-debug-toolbar
 mdformat-gfm
 pytest
 pytest-asyncio
 pytest-django
 pytest-httpx
-django-debug-toolbar
+pytest-playwright
