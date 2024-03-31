@@ -1,68 +1,154 @@
 import "vite/modulepreload-polyfill";
-import { unzipSync } from 'fflate';
+import { unzipSync, zipSync } from 'fflate';
+import ignore from "ignore";
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   const fileInput = document.getElementById('id_zip_file');
   const removeFileBtn = document.getElementById('removeFileBtn');
+
+  fileInput.addEventListener('change', handleFileInputChange);
+  removeFileBtn.addEventListener('click', handleRemoveFileClick);
+
+  const folderForm = document.getElementById('folderForm');
+
+
+  folderForm.addEventListener('submit', handleFolderSubmit);
+});
+
+/**
+ * Processes files based on .gitignore rules.
+ * @param {FileList} files - The list of files to process.
+ * @param {string} manualGitignoreContent - The manually provided .gitignore content.
+ * @returns {File[]} - An array of filtered files.
+ */
+function processFiles(files, manualGitignoreContent = '') {
+  // Filter .gitignore files from the file list
+  const gitignoreFiles = Array.from(files).filter(file => file.name === '.gitignore');
+
+  const ig = ignore().add(manualGitignoreContent);
+
+  // Filter files based on the .gitignore rules
+  return Array.from(files).filter(file => {
+    // Check if the file is ignored by the manual .gitignore content
+    if (ig.ignores(file.webkitRelativePath)) {
+      return false;
+    }
+
+    // Check if the file is ignored by any .gitignore file in its directory or parent directories
+    for (const gitignoreFile of gitignoreFiles) {
+      const gitignoreDirectory = gitignoreFile.webkitRelativePath.replace('.gitignore', '');
+      if (file.webkitRelativePath.startsWith(gitignoreDirectory)) {
+        const reader = new FileReader();
+        reader.readAsText(gitignoreFile);
+        const gitignoreContent = reader.result;
+        const gitignoreIg = ignore().add(gitignoreContent);
+        if (gitignoreIg.ignores(file.webkitRelativePath)) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  });
+}
+
+// Function to manage error display
+function updateZipFileError(message) {
   const zipFileErrorDiv = document.getElementById('zipFileError');
 
-  // Function to manage error display
-  function updateZipFileError(message) {
-    if (message) {
-      zipFileErrorDiv.textContent = message;
-      zipFileErrorDiv.style.display = 'block';
-    } else {
-      zipFileErrorDiv.style.display = 'none';
-      zipFileErrorDiv.textContent = '';
-    }
+  if (message) {
+    zipFileErrorDiv.textContent = message;
+    zipFileErrorDiv.style.display = 'block';
+  } else {
+    zipFileErrorDiv.style.display = 'none';
+    zipFileErrorDiv.textContent = '';
   }
+}
 
-  fileInput.addEventListener('change', function(event) {
-    const file = event.target.files[0];
+// Function to handle file input change event
+function handleFileInputChange(event) {
+  const file = event.target.files[0];
+  const removeFileBtn = document.getElementById('removeFileBtn');
 
-    // Immediately show the remove file button when a file is chosen
-    removeFileBtn.style.display = file ? 'inline-block' : 'none';
+  removeFileBtn.style.display = file ? 'inline-block' : 'none';
+  updateZipFileError();
 
-    // Clear previous errors
-    updateZipFileError();
-
-    if (file) {
-      // Size check
-      const max_size = JSON.parse(document.getElementById('max-repo-size').textContent)
-      console.log("max_size", max_size)
-      if (file.size > max_size) {
-        updateZipFileError('This file is too large to process here.');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const bytes = new Uint8Array(e.target.result);
-        // Magic number check to see if it's a valid ZIP file
-
-        if (bytes[0] === 0x50 && bytes[1] === 0x4B && bytes[2] === 0x03 && bytes[3] === 0x04) {
-          // Proceed to read the entire file and attempt to unzip
-          const fullFileReader = new FileReader();
-          fullFileReader.onload = function(e) {
-            try {
-              unzipSync(new Uint8Array(e.target.result)); // Try to unzip
-              // If no error, optionally update UI to indicate success
-            } catch (error) {
-              updateZipFileError('Unable to unzip.');
-            }
-          };
-          fullFileReader.readAsArrayBuffer(file);
-        } else {
-          updateZipFileError('This file does not appear to be a valid ZIP file.');
-        }
-      };
-      reader.readAsArrayBuffer(file.slice(0, 4));
+  if (file) {
+    const max_size = JSON.parse(document.getElementById('max-repo-size').textContent);
+    if (file.size > max_size) {
+      updateZipFileError('This file is too large to process here.');
+      return;
     }
-  });
 
-  removeFileBtn.addEventListener('click', function() {
-    fileInput.value = ''; // Clear the file input
-    updateZipFileError(); // Clear any existing error messages
-    this.style.display = 'none'; // Hide the remove button
-  });
-});
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const bytes = new Uint8Array(e.target.result);
+      if (isValidZipFile(bytes)) {
+        const fullFileReader = new FileReader();
+        fullFileReader.onload = function (e) {
+          try {
+            unzipSync(new Uint8Array(e.target.result));
+          } catch (error) {
+            updateZipFileError('Unable to unzip.');
+          }
+        };
+        fullFileReader.readAsArrayBuffer(file);
+      } else {
+        updateZipFileError('This file does not appear to be a valid ZIP file.');
+      }
+    };
+    reader.readAsArrayBuffer(file.slice(0, 4));
+  }
+}
+
+// Function to check if a file is a valid ZIP file
+function isValidZipFile(bytes) {
+  return bytes[0] === 0x50 && bytes[1] === 0x4B && bytes[2] === 0x03 && bytes[3] === 0x04;
+}
+
+// Function to handle remove file button click event
+function handleRemoveFileClick() {
+  const fileInput = document.getElementById('id_zip_file');
+  fileInput.value = '';
+  updateZipFileError();
+  this.style.display = 'none';
+}
+
+  async function handleFolderSubmit(event) {
+    event.preventDefault();
+
+    const folderInput = document.getElementById('folderInput');
+    const files = folderInput.files;
+
+    if (files.length === 0) {
+      console.log('No folder selected.');
+      return;
+    }
+
+    const folderName = files[0].webkitRelativePath.split('/')[0];
+    const zipData = {};
+
+    const manualGitignoreContent = document.getElementById('manualGitignore').value;
+    // Filter files based on .gitignore rules
+    const filteredFiles = processFiles(files, manualGitignoreContent);
+
+    // Iterate over filtered files and add them to zipData object
+    for (let i = 0; i < filteredFiles.length; i++) {
+      const file = filteredFiles[i];
+      const relativePath = file.webkitRelativePath;
+      console.log({file, relativePath});
+      const fileData = await file.arrayBuffer();
+      zipData[relativePath] = new Uint8Array(fileData);
+    }
+
+    // Create a zip file from the zipData object
+    const zippedData = zipSync(zipData);
+
+    const zipFileInput = document.querySelector('#id_zip_file');
+    const zipFile = new File([zippedData], `${folderName}.zip`, {type: 'application/zip'});
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(zipFile);
+    zipFileInput.files = dataTransfer.files;
+
+    document.querySelector('form[method="post"][enctype="multipart/form-data"]').submit();
+  }
