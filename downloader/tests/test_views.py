@@ -12,29 +12,32 @@ from downloader.repo_utils import (
 from downloader.file_utils import ExtractionResult
 
 
-def test_download_repo_view_get(client):
+@pytest.mark.asyncio
+async def test_download_repo_view_get(async_client):
     url = reverse("download_repo")
-    response = client.get(url)
+    response = await async_client.get(url)
     assert response.status_code == 200
     assert "downloader.html" in [t.name for t in response.templates]
     assert "repo_url_form" in response.context
     assert "zip_file_form" in response.context
 
 
-def test_download_repo_view_post_valid_form(client):
+@pytest.mark.asyncio
+async def test_download_repo_view_post_valid_form(async_client):
     url = reverse("download_repo")
     data = {"repo_url": "https://github.com/username/repo"}
-    response = client.post(url, data)
+    response = await async_client.post(url, data)
     assert response.status_code == 302
     assert response.url == reverse(
         "download_result", kwargs={"username": "username", "repo_name": "repo"}
     )
 
 
-def test_download_repo_view_post_invalid_form(client):
+@pytest.mark.asyncio
+async def test_download_repo_view_post_invalid_form(async_client):
     url = reverse("download_repo")
     data = {"repo_url": "invalid_url"}
-    response = client.post(url, data)
+    response = await async_client.post(url, data)
     assert response.status_code == 200
     assert "repo_url_form" in response.context
     assert response.context["repo_url_form"].errors
