@@ -51,6 +51,12 @@ class RepositoryURLForm(forms.Form):
     repo_url = forms.URLField(
         label="GitHub Repository URL",
         validators=[validate_repo_url],
+        widget=forms.URLInput(
+            attrs={
+                "pattern": "https://github\.com/.+/.+",
+                "title": "Please enter a valid GitHub repository URL.",
+            }
+        ),
     )
 
     def clean_repo_url(self):
