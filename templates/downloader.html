@@ -130,14 +130,15 @@
             </button>
           </div>
           {% if zip_file_form.zip_file.errors %}
-            <div class="error-message">
+            <div class="error-message" data-test-id="zip-file-server-errors">
               {{ zip_file_form.zip_file.errors }}
             </div>
           {% endif %}
           <div id="zipFileError"
                class="error-message-def-hidden"
                style="display:none;"></div>
-          <button type="submit" style="margin-top: 10px">Submit</button>
+          <button type="submit" style="margin-top: 10px" 
+                  data-test-id="zip-file-submit">Submit</button>
         </form>
 
         <form id="folderForm">
