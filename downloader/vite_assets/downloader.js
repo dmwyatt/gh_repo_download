@@ -74,16 +74,26 @@ function handleFileInputChange(event) {
   updateZipFileError();
 
   if (file) {
+
+    insertText("File selected");
+
+
+
     const max_size = JSON.parse(document.getElementById('max-repo-size').textContent);
     if (file.size > max_size) {
+      insertText("Too big")
       updateZipFileError('This file is too large to process here.');
       return;
     }
+    insertText("Size OK")
 
     const reader = new FileReader();
+
     reader.onload = function (e) {
+      insertText("File loaded")
       const bytes = new Uint8Array(e.target.result);
       if (isValidZipFile(bytes)) {
+        insertText("Valid zip file")
         const fullFileReader = new FileReader();
         fullFileReader.onload = function (e) {
           try {
@@ -94,9 +104,12 @@ function handleFileInputChange(event) {
         };
         fullFileReader.readAsArrayBuffer(file);
       } else {
+        insertText("Not a zip file")
         updateZipFileError('This file does not appear to be a valid ZIP file.');
       }
     };
+
+    insertText("Reading file first 4 bytes")
     reader.readAsArrayBuffer(file.slice(0, 4));
   }
 }
@@ -152,3 +165,12 @@ function handleRemoveFileClick() {
 
     document.querySelector('form[method="post"][enctype="multipart/form-data"]').submit();
   }
+
+
+  function insertText(text) {
+  const p = document.createElement('p');
+  p.textContent = text;
+  p.style.color = 'green';
+  p.style.marginTop = '10px';
+  document.querySelector('button[data-test-id="zip-file-submit"]').after(p);
+}
