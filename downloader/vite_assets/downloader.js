@@ -6,8 +6,10 @@ document.addEventListener('DOMContentLoaded', function () {
   const fileInput = document.getElementById('id_zip_file');
   const removeFileBtn = document.getElementById('removeFileBtn');
 
+  insertText("Event listeners adding")
   fileInput.addEventListener('change', handleFileInputChange);
   removeFileBtn.addEventListener('click', handleRemoveFileClick);
+  insertText("Event listeners added")
 
   const folderForm = document.getElementById('folderForm');
 
