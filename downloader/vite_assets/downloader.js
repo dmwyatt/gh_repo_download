@@ -2,6 +2,8 @@ import "vite/modulepreload-polyfill";
 import { unzipSync, zipSync } from 'fflate';
 import ignore from "ignore";
 
+insertText("Woop")
+
 document.addEventListener('DOMContentLoaded', function () {
   const fileInput = document.getElementById('id_zip_file');
   const removeFileBtn = document.getElementById('removeFileBtn');
