@@ -34,20 +34,19 @@ jobs:
         uv pip compile requirements.in dev-requirements.in -o requirements.txt
 
     - name: Install dependencies
-      env:
-        SECRET_KEY: im_so_secret
       run: |
         uv pip install --python=$(which python3) -r requirements.txt
         npm ci
         npm run build
         python -m playwright install --with-deps firefox
-        python manage.py collectstatic --noinput
 
     - name: Run tests
       env:
         SECRET_KEY: im_so_secret
       run: |
+        npm run dev &
         pytest
+        pkill node
 
     - uses: actions/upload-artifact@v4
       if: always()
