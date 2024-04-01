@@ -39,6 +39,7 @@ jobs:
         npm ci
         npm run build
         python -m playwright install --with-deps firefox
+        python manage.py collectstatic --noinput
 
     - name: Run tests
       env:
