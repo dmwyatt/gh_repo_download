@@ -38,7 +38,7 @@ jobs:
         uv pip install --python=$(which python3) -r requirements.txt
         npm ci
         npm run build
-        python -m playwright install --with-deps
+        python -m playwright install --with-deps firefox
 
     - name: Run tests
       env:
