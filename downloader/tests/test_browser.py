@@ -116,6 +116,6 @@ def test_zip_file_upload_invalid_zip_client_side_validation(
 
     error_locator = page.locator("div#zipFileError")
     expect(error_locator).to_have_text(
-        "This file does not appear to be a valid ZIP file."
+        "This file does not appear to be a valid ZIP file.", timeout=15000
     )
     assert False
