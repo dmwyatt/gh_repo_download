@@ -119,3 +119,4 @@ def test_zip_file_upload_invalid_zip_client_side_validation(
     expect(error_locator).to_have_text(
         "This file does not appear to be a valid ZIP file."
     )
+    assert False
