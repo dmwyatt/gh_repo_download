@@ -101,7 +101,7 @@ def test_zip_file_upload_works(page: Page, zip_file_fixture, live_server):
 @pytest.fixture(scope="session")
 def binary_file(tmp_path_factory):
     binary_file_path: Path = tmp_path_factory.mktemp("binary") / "binary.bin"
-    binary_data = bytes(random.getrandbits(8) for _ in range(1024))
+    binary_data = bytes(random.getrandbits(8) for _ in range(128))
     binary_file_path.write_bytes(binary_data)
     yield binary_file_path
     os.remove(binary_file_path)
@@ -118,4 +118,3 @@ def test_zip_file_upload_invalid_zip_client_side_validation(
     expect(error_locator).to_have_text(
         "This file does not appear to be a valid ZIP file.", timeout=120000
     )
-    assert False
