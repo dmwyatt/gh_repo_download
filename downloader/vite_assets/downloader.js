@@ -2,8 +2,6 @@ import "vite/modulepreload-polyfill";
 import { unzipSync, zipSync } from 'fflate';
 import ignore from "ignore";
 
-insertText("Woop")
-
 document.addEventListener('DOMContentLoaded', function () {
   const fileInput = document.getElementById('id_zip_file');
   const removeFileBtn = document.getElementById('removeFileBtn');
@@ -82,7 +80,6 @@ function handleFileInputChange(event) {
     insertText("File selected");
 
 
-
     const max_size = JSON.parse(document.getElementById('max-repo-size').textContent);
     if (file.size > max_size) {
       insertText("Too big")
@@ -131,47 +128,47 @@ function handleRemoveFileClick() {
   this.style.display = 'none';
 }
 
-  async function handleFolderSubmit(event) {
-    event.preventDefault();
+async function handleFolderSubmit(event) {
+  event.preventDefault();
 
-    const folderInput = document.getElementById('folderInput');
-    const files = folderInput.files;
+  const folderInput = document.getElementById('folderInput');
+  const files = folderInput.files;
 
-    if (files.length === 0) {
-      console.log('No folder selected.');
-      return;
-    }
-
-    const folderName = files[0].webkitRelativePath.split('/')[0];
-    const zipData = {};
-
-    const manualGitignoreContent = document.getElementById('manualGitignore').value;
-    // Filter files based on .gitignore rules
-    const filteredFiles = processFiles(files, manualGitignoreContent);
-
-    // Iterate over filtered files and add them to zipData object
-    for (let i = 0; i < filteredFiles.length; i++) {
-      const file = filteredFiles[i];
-      const relativePath = file.webkitRelativePath;
-      console.log({file, relativePath});
-      const fileData = await file.arrayBuffer();
-      zipData[relativePath] = new Uint8Array(fileData);
-    }
-
-    // Create a zip file from the zipData object
-    const zippedData = zipSync(zipData);
-
-    const zipFileInput = document.querySelector('#id_zip_file');
-    const zipFile = new File([zippedData], `${folderName}.zip`, {type: 'application/zip'});
-    const dataTransfer = new DataTransfer();
-    dataTransfer.items.add(zipFile);
-    zipFileInput.files = dataTransfer.files;
-
-    document.querySelector('form[method="post"][enctype="multipart/form-data"]').submit();
+  if (files.length === 0) {
+    console.log('No folder selected.');
+    return;
   }
 
+  const folderName = files[0].webkitRelativePath.split('/')[0];
+  const zipData = {};
 
-  function insertText(text) {
+  const manualGitignoreContent = document.getElementById('manualGitignore').value;
+  // Filter files based on .gitignore rules
+  const filteredFiles = processFiles(files, manualGitignoreContent);
+
+  // Iterate over filtered files and add them to zipData object
+  for (let i = 0; i < filteredFiles.length; i++) {
+    const file = filteredFiles[i];
+    const relativePath = file.webkitRelativePath;
+    console.log({file, relativePath});
+    const fileData = await file.arrayBuffer();
+    zipData[relativePath] = new Uint8Array(fileData);
+  }
+
+  // Create a zip file from the zipData object
+  const zippedData = zipSync(zipData);
+
+  const zipFileInput = document.querySelector('#id_zip_file');
+  const zipFile = new File([zippedData], `${folderName}.zip`, {type: 'application/zip'});
+  const dataTransfer = new DataTransfer();
+  dataTransfer.items.add(zipFile);
+  zipFileInput.files = dataTransfer.files;
+
+  document.querySelector('form[method="post"][enctype="multipart/form-data"]').submit();
+}
+
+
+function insertText(text) {
   const p = document.createElement('p');
   p.textContent = text;
   p.style.color = 'green';

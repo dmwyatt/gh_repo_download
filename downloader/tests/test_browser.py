@@ -107,6 +107,9 @@ def binary_file(tmp_path_factory):
     os.remove(binary_file_path)
 
 
+@pytest.mark.browser_context_args(
+    record_har_path="test_zip_file_upload_invalid_zip_client_side_validation.har"
+)
 def test_zip_file_upload_invalid_zip_client_side_validation(
     page: Page, binary_file, live_server
 ):
