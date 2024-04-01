@@ -86,10 +86,10 @@ def zip_file_fixture(tmpdir_factory):
     os.remove(zip_path)
 
 
-def test_zip_file_upload_works(page: Page, zip_file_fixture):
+def test_zip_file_upload_works(page: Page, zip_file_fixture, live_server):
     zip_file_path, file_contents, zip_file_name = zip_file_fixture
 
-    page.goto("http://localhost:8000/")
+    page.goto(live_server.url)
     file_input = page.locator('input[name="zip_file"]')
 
     file_input.set_input_files(zip_file_path)
@@ -107,8 +107,10 @@ def binary_file(tmp_path_factory):
     os.remove(binary_file_path)
 
 
-def test_zip_file_upload_invalid_zip_client_side_validation(page: Page, binary_file):
-    page.goto("http://localhost:8000/")
+def test_zip_file_upload_invalid_zip_client_side_validation(
+    page: Page, binary_file, live_server
+):
+    page.goto(live_server.url)
     file_input = page.locator('input[name="zip_file"]')
     file_input.set_input_files(binary_file)
 
