@@ -49,11 +49,11 @@ jobs:
     - name: list restuls directory
       if: always()
       run: |
-        ls -la 
+        ls -la test-results/
 
     - uses: actions/upload-artifact@v4
       if: always()
       with:
         name: playwright-report
-        path: downloader/tests/test-results/
+        path: test-results/
         retention-days: 30
