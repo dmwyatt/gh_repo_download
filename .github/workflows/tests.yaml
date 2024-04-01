@@ -47,6 +47,7 @@ jobs:
         pytest
 
     - name: list restuls directory
+      if: always()
       run: |
         ls -la downloader/tests/test-results/
 

@@ -112,6 +112,7 @@ def test_zip_file_upload_invalid_zip_client_side_validation(
 ):
     page.goto(live_server.url)
     file_input = page.locator('input[name="zip_file"]')
+
     file_input.set_input_files(binary_file)
 
     error_locator = page.locator("div#zipFileError")
