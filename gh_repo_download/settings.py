@@ -180,5 +180,6 @@ MAX_TEXT_SIZE = 10 * 1024 * 1024  # size of text to be extracted from the files
 
 RESTRICTED_FILE_EXTENSIONS = [".exe", ".dll", ".so", ".pyc"]
 
+_in_ci = env.bool("CI", default=False)
 
-DJANGO_VITE = {"default": {"dev_mode": DEBUG}}
+DJANGO_VITE = {"default": {"dev_mode": DEBUG if not _in_ci else True}}
