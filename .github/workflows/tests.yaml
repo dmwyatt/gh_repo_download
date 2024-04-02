@@ -56,10 +56,3 @@ jobs:
         name: playwright-report
         path: test-results/
         retention-days: 30
-
-    - uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: har
-        path: test_zip_file_upload_invalid_zip_client_side_validation.har
-        retention-days: 30
