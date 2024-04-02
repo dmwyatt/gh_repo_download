@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% load django_vite %}
 
 {% block title %}GitHub Repository Downloader{% endblock %}
@@ -88,6 +89,9 @@
 {% block content %}
   <div class="container">
     <h1>GitHub Repository Downloader</h1>
+  
+{#    <img src="{% static 'downloader/dummy.txt' %}" alt="Dummy File">#}
+  
 
     <section>
       {% if error_message %}
