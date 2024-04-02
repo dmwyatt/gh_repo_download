@@ -10,6 +10,7 @@ from playwright.sync_api import Page, expect
 
 def test_repo_download_invalid_url_server_side_validation(page: Page, live_server):
     page.goto(live_server.url)
+
     # Remove the pattern attribute from the input field
     page.evaluate(
         "document.querySelector('input[name=\"repo_url\"]').removeAttribute('pattern');"
@@ -107,19 +108,41 @@ def binary_file(tmp_path_factory):
     os.remove(binary_file_path)
 
 
-@pytest.mark.browser_context_args(
-    record_har_path="test_zip_file_upload_invalid_zip_client_side_validation.har"
-)
 def test_zip_file_upload_invalid_zip_client_side_validation(
     page: Page, binary_file, live_server
 ):
     page.goto(live_server.url)
+
     file_input = page.locator('input[name="zip_file"]')
 
     file_input.set_input_files(binary_file)
 
     error_locator = page.locator("div#zipFileError")
     expect(error_locator).to_have_text(
-        "This file does not appear to be a valid ZIP file.", timeout=20000
+        "This file does not appear to be a valid ZIP file."
     )
-    # page.pause()
+
+
+@pytest.mark.skip(reason="This test is for testing test environment configuration.")
+def test_static_file_access(page: Page, live_server):
+    """
+    Add the following element somewhere to `downloader.html` or whatever the
+    template served at / is.
+
+    <img src="{% static 'downloader/dummy.txt' %}" alt="Dummy File">
+    """
+    page.goto(live_server.url)
+
+    # Get the static file URL
+    static_file_url = page.evaluate(
+        "document.querySelector('img[src$=\"static/downloader/dummy.txt\"]').src"
+    )
+
+    # Navigate to the static file URL
+    response = page.goto(static_file_url)
+
+    # Check the status of the static file response
+    assert response.status in [
+        200,
+        304,
+    ], f"Static file request failed with status {response.status}"
