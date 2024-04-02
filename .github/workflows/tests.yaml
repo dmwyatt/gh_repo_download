@@ -9,6 +9,10 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      DJANGO_SETTINGS_MODULE: gh_repo_download.settings.test
+      SECRET_KEY: im_so_secret
+
 
     steps:
     - uses: actions/checkout@v4
@@ -41,12 +45,10 @@ jobs:
         python -m playwright install --with-deps firefox
 
     - name: Run tests
-      env:
-        SECRET_KEY: im_so_secret
       run: |
-        npm run dev &
+        npm run build
+        python manage.py collectstatic --noinput
         pytest
-        pkill node
 
     - uses: actions/upload-artifact@v4
       if: always()
