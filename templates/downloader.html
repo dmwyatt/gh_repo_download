@@ -65,7 +65,7 @@
           max-width: 250px
       }
 
-      #manualGitignore {
+      #exclusionRules {
           min-height: 100px;
           max-height: 300px;
           overflow-y: auto;
@@ -99,9 +99,9 @@
 
 
       <div class="forms">
-        
+
         <h2>Download a GitHub Repository as a Single Text File</h2>
-      
+
 
         {% if repo_url_form.non_field_errors %}
           {% for error in repo_url_form.non_field_errors %}
@@ -122,7 +122,7 @@
           <button id="fillFormButton" type="button">Test it out with this site's repo!
           </button>
         </form>
-      
+
         <h2>Upload a Zip File</h2>
 
         {% if zip_file_form.non_field_errors %}
@@ -147,11 +147,16 @@
           <div id="zipFileError"
                class="error-message-def-hidden"
                style="display:none;"></div>
-          <button type="submit" style="margin-top: 10px"
-                  data-test-id="zip-file-submit" disabled>Submit
+          <div class="instructions">
+            <p>Select a ZIP file containing the text files you want to process.</p>
+          </div>
+          <button type="submit"
+                  style="margin-top: 10px"
+                  data-test-id="zip-file-submit"
+                  disabled>Submit
           </button>
         </form>
-      
+
         <h2>Upload a Folder</h2>
 
         {% if folder_form.non_field_errors %}
@@ -168,10 +173,24 @@
 
           <div>
             <p class="instructions">
-              Enter additional .gitignore rules to exclude specific files or directories
-              from the selected folder. Each rule should be on a separate line.
+              The rules provided below will be used to exclude specific files and
+              directories from the selected folder during processing. These rules are in
+              addition to the default exclusions.
             </p>
-            <textarea id="manualGitignore" name="manual_gitignore">
+            <p class="instructions">
+              Each line should contain a single rule specifying a file or directory
+              pattern to exclude. You can use wildcards (*) to match multiple files or
+              directories.
+            </p>
+            <p class="instructions">
+              For example, "*.log" will exclude all files with the ".log" extension, and
+              "temp/" will exclude a directory named "temp" and its contents.
+            </p>
+            <p class="instructions">
+              You can modify these rules or add additional ones to customize which files
+              and directories are included in the processing.
+            </p>
+            <textarea id="exclusionRules" name="exclusion_rules">
 node_modules/
 .venv/
 venv/
@@ -198,7 +217,7 @@ coverage/
 Thumbs.db
 *~
 *.bak
-          </textarea>
+    </textarea>
           </div>
 
           <button type="submit" disabled>Submit Folder</button>
@@ -209,21 +228,22 @@ Thumbs.db
 
     <div class="section">
       <h2>What is this site?</h2>
-      <p>This site allows you to download and view the contents of a GitHub repository as
-         a
-         single text file.</p>
+      <p>This site simplifies the process of aggregating and viewing digital content by
+         enabling users to effortlessly consolidate information from multiple sources into
+         a single text file, enhancing accessibility and readability.
+      </p>
     </div>
 
     <div class="section">
       <h2>Why was this tool created?</h2>
-      <p>This tool was created to make it easy to share context with chatbots like
-         ChatGPT,
-         Claude, and Gemini.
-         By downloading a GitHub repository as a single text file, you can easily provide
-         the chatbot with the necessary context to understand and discuss the contents of
-         the repository. You can find the source code for this site
+      <p>This tool was created to simplify the process of sharing context with advanced
+         chatbots such as ChatGPT, Claude, and Gemini. By allowing users to compile and
+         convert diverse digital content into a single text file, it facilitates easy
+         context provision to chatbots for enhanced understanding and interaction with
+         the material. You can find the source code for this site
         <a href="https://github.com/dmwyatt/gh_repo_download#what-is-this-project">here</a>.
       </p>
+
       <p>Here are a few examples of how this tool can be useful when interacting with
          chatbots:</p>
       <ul>
