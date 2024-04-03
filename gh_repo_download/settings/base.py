@@ -9,12 +9,13 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
-
+import re
 from pathlib import Path
+
 from environ import Env
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 env = Env()
 Env.read_env(BASE_DIR / ".env")
@@ -136,6 +137,7 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [BASE_DIR / "downloader/vite_assets_dist/"]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -178,7 +180,12 @@ MAX_REPO_SIZE = 10 * 1024 * 1024  # size of zip file downloaded from github
 MAX_FILE_COUNT = 1000  # number of files extracted from the zip file
 MAX_TEXT_SIZE = 10 * 1024 * 1024  # size of text to be extracted from the files
 
-RESTRICTED_FILE_EXTENSIONS = [".exe", ".dll", ".so", ".pyc"]
-
-
 DJANGO_VITE = {"default": {"dev_mode": DEBUG}}
+
+
+def immutable_file_test(path, url):
+    # Match vite (rollup)-generated hashes, à la, `some_file-CSliV9zW.js`
+    return re.match(r"^.+[.-][0-9a-zA-Z_-]{8,12}\..+$", url)
+
+
+WHITENOISE_IMMUTABLE_FILE_TEST = immutable_file_test

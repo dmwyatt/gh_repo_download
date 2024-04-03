@@ -7,8 +7,7 @@ export default defineConfig({
   base: "/static/",
   build: {
     modulePreload: true,
-    outDir: resolve("./staticfiles/"),
-    assetsDir: "",
+    outDir: resolve("./downloader/vite_assets_dist/"),
     manifest: "manifest.json",
     emptyOutDir: true,
     rollupOptions: {

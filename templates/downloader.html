@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% load django_vite %}
 
 {% block title %}GitHub Repository Downloader{% endblock %}
@@ -88,16 +89,11 @@
 {% block content %}
   <div class="container">
     <h1>GitHub Repository Downloader</h1>
+  
+{#    <img src="{% static 'downloader/dummy.txt' %}" alt="Dummy File">#}
+  
 
     <section>
-      {% if messages %}
-        <ul class="messages">
-          {% for message in messages %}
-            <li
-                {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-          {% endfor %}
-        </ul>
-      {% endif %}
       {% if error_message %}
         <p class="error-message">{{ error_message }}</p>
       {% endif %}
@@ -114,7 +110,7 @@
           {{ repo_url_form.repo_url.label }}
           {{ repo_url_form.repo_url }}
           {% if repo_url_form.repo_url.errors %}
-            <div class="error-message">
+            <div class="error-message" data-test-id="repo-url-server-errors">
               {{ repo_url_form.repo_url.errors }}
             </div>
           {% endif %}
@@ -138,14 +134,15 @@
             </button>
           </div>
           {% if zip_file_form.zip_file.errors %}
-            <div class="error-message">
+            <div class="error-message" data-test-id="zip-file-server-errors">
               {{ zip_file_form.zip_file.errors }}
             </div>
           {% endif %}
           <div id="zipFileError"
                class="error-message-def-hidden"
                style="display:none;"></div>
-          <button type="submit" style="margin-top: 10px">Submit</button>
+          <button type="submit" style="margin-top: 10px" 
+                  data-test-id="zip-file-submit">Submit</button>
         </form>
 
         <form id="folderForm">

@@ -14,12 +14,13 @@ def expected_content():
         return f.read()
 
 
-def test_repository_downloader_integration(client, expected_content):
+@pytest.mark.asyncio
+async def test_repository_downloader_integration(async_client, expected_content):
     url = reverse("download_repo")
     test_repo_url = "https://github.com/dmwyatt/gh_repo_dl_test"
 
     # Send a POST request to the view with the test repository URL
-    response = client.post(url, {"repo_url": test_repo_url}, follow=True)
+    response = await async_client.post(url, {"repo_url": test_repo_url}, follow=True)
 
     # Check that the response is successful
     assert response.status_code == 200
@@ -41,12 +42,13 @@ def test_repository_downloader_integration(client, expected_content):
     assert decoded_content == expected_content
 
 
-def test_invalid_repository_url(client):
+@pytest.mark.asyncio
+async def test_invalid_repository_url(async_client):
     url = reverse("download_repo")
     invalid_url = "https://github.com/invalid/repo"
 
     # Send a POST request with an invalid repository URL
-    response = client.post(url, {"repo_url": invalid_url})
+    response = await async_client.post(url, {"repo_url": invalid_url})
 
     # Check that the response redirects to the download result page
     assert response.status_code == 302
@@ -55,7 +57,7 @@ def test_invalid_repository_url(client):
     )
 
     # Follow the redirect
-    response = client.post(url, {"repo_url": invalid_url}, follow=True)
+    response = await async_client.post(url, {"repo_url": invalid_url}, follow=True)
 
     # Check that the response is successful after following the redirects
     assert response.status_code == 200
