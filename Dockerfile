@@ -39,7 +39,7 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh \
     && cd /code \
     && uv pip compile requirements.in -o requirements.txt \
     && uv pip sync requirements.txt \
-    && uv pip install gunicorn uvicorn \
+    && uv pip install gunicorn uvicorn
 
 EXPOSE 8000
 
