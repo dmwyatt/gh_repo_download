@@ -88,22 +88,26 @@
 
 {% block content %}
   <div class="container">
-    <h1>GitHub Repository Downloader</h1>
-  
-{#    <img src="{% static 'downloader/dummy.txt' %}" alt="Dummy File">#}
-  
+    <h1>Create Text Context</h1>
+
+    {#    <img src="{% static 'downloader/dummy.txt' %}" alt="Dummy File">#}
 
     <section>
       {% if error_message %}
         <p class="error-message">{{ error_message }}</p>
       {% endif %}
-      {% if repo_url_form.non_field_errors %}
-        {% for error in repo_url_form.non_field_errors %}
-          <p class="error-message">{{ error }}</p>
-        {% endfor %}
-      {% endif %}
+
 
       <div class="forms">
+        
+        <h2>Download a GitHub Repository as a Single Text File</h2>
+      
+
+        {% if repo_url_form.non_field_errors %}
+          {% for error in repo_url_form.non_field_errors %}
+            <p class="error-message">{{ error }}</p>
+          {% endfor %}
+        {% endif %}
 
         <form method="post">
           {% csrf_token %}
@@ -118,6 +122,8 @@
           <button id="fillFormButton" type="button">Test it out with this site's repo!
           </button>
         </form>
+      
+        <h2>Upload a Zip File</h2>
 
         {% if zip_file_form.non_field_errors %}
           {% for error in zip_file_form.non_field_errors %}
@@ -141,9 +147,18 @@
           <div id="zipFileError"
                class="error-message-def-hidden"
                style="display:none;"></div>
-          <button type="submit" style="margin-top: 10px" 
-                  data-test-id="zip-file-submit">Submit</button>
+          <button type="submit" style="margin-top: 10px"
+                  data-test-id="zip-file-submit">Submit
+          </button>
         </form>
+      
+        <h2>Upload a Folder</h2>
+
+        {% if folder_form.non_field_errors %}
+          {% for error in folder_form.non_field_errors %}
+            <p class="error-message">{{ error }}</p>
+          {% endfor %}
+        {% endif %}
 
         <form id="folderForm">
           <div>
