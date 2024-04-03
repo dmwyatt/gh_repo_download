@@ -40,13 +40,11 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh \
     && uv pip compile requirements.in -o requirements.txt \
     && uv pip sync requirements.txt \
     && uv pip install gunicorn uvicorn \
-    && python manage.py collectstatic --noinput
 
 EXPOSE 8000
 
-CMD ["gunicorn", \
-     "gh_repo_download.asgi:application", \
-     "--workers 4", \
-     "--worker-class", "uvicorn.workers.UvicornWorker", \
-     "--bind", "0.0.0.0:8000" \
- ]
+COPY startup.sh /code/
+
+RUN chmod +x /code/startup.sh
+
+CMD ["/code/startup.sh"]
