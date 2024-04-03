@@ -7,6 +7,8 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
+
+# outputs to /app/downloader/vite_assets_dist/
 RUN npm run build
 
 
@@ -30,7 +32,7 @@ WORKDIR /code
 COPY . /code/
 
 # Copy the built files from the node-build stage
-COPY --from=node-build /app/staticfiles /code/staticfiles
+COPY --from=node-build /app/downloader/vite_assets_dist/ /code/downloader/vite_assets_dist/
 
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh \
     && . $HOME/.cargo/env \
