@@ -13,8 +13,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const folderForm = document.getElementById('folderForm');
 
-
   folderForm.addEventListener('submit', handleFolderSubmit);
+
+  const forms = document.querySelectorAll('form');
+
+  forms.forEach(form => {
+    const submitButton = form.querySelector('button[type="submit"]');
+    const inputFields = form.querySelectorAll('input, textarea');
+
+    inputFields.forEach(field => {
+      field.addEventListener('input', function () {
+        const isFormFilled = Array.from(inputFields).every(field => field.value.trim() !== '');
+        submitButton.disabled = !isFormFilled;
+      });
+    });
+  });
 });
 
 /**
