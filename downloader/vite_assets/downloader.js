@@ -169,9 +169,9 @@ async function handleFolderSubmit(event) {
 
 
 function insertText(text) {
-  const p = document.createElement('p');
-  p.textContent = text;
-  p.style.color = 'green';
-  p.style.marginTop = '10px';
-  document.querySelector('button[data-test-id="zip-file-submit"]').after(p);
+  // const p = document.createElement('p');
+  // p.textContent = text;
+  // p.style.color = 'green';
+  // p.style.marginTop = '10px';
+  // document.querySelector('button[data-test-id="zip-file-submit"]').after(p);
 }
