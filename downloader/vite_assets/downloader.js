@@ -141,7 +141,7 @@ async function handleFolderSubmit(event) {
   const folderName = files[0].webkitRelativePath.split('/')[0];
   const zipData = {};
 
-  const manualGitignoreContent = document.getElementById('manualGitignore').value;
+  const manualGitignoreContent = document.getElementById('exclusionRules').value;
   // Filter files based on .gitignore rules
   const filteredFiles = processFiles(files, manualGitignoreContent);
 
