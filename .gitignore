@@ -3,6 +3,6 @@
 *requirements.txt
 .env
 generated_files/
-/node_modules/
-/staticfiles/
+node_modules/
+staticfiles/
 /downloader/vite_assets_dist/
