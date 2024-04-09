@@ -16,10 +16,11 @@ def test_repo_download_invalid_url_server_side_validation(page: Page, live_serve
         "document.querySelector('input[name=\"repo_url\"]').removeAttribute('pattern');"
     )
     page.fill('input[name="repo_url"]', "https://not-a-real-url.com")
+
     # Press Enter to submit the form
     page.press('input[name="repo_url"]', "Enter")
-    # wait for a ul with a li containing the error message
 
+    # wait for a ul with a li containing the error message
     locator = page.locator("div[data-test-id='repo-url-server-errors'] > ul > li")
     expect(locator).to_contain_text("Please provide a valid GitHub repository URL")
 
@@ -121,6 +122,30 @@ def test_zip_file_upload_invalid_zip_client_side_validation(
     expect(error_locator).to_have_text(
         "This file does not appear to be a valid ZIP file."
     )
+
+
+def test_zip_file_upload_too_big_client_side_validation(
+    page: Page, zip_file_fixture, live_server, settings
+):
+    settings.MAX_REPO_SIZE = 1  # 1 byte!
+    page.goto(live_server.url)
+    zip_file_path, file_contents, zip_file_name = zip_file_fixture
+    file_input = page.locator('input[name="zip_file"]')
+    file_input.set_input_files(zip_file_path)
+    error_locator = page.locator("div#zipFileError")
+    expect(error_locator).to_have_text("This file is too large to process here.")
+
+
+# def test_zip_file_upload_too_big_server_side_validation(
+#     page: Page, zip_file_fixture, live_server, settings
+# ):
+#     settings.MAX_REPO_SIZE = 1  # 1 byte!
+#     page.goto(live_server.url)
+#     zip_file_path, file_contents, zip_file_name = zip_file_fixture
+#     file_input = page.locator('input[name="zip_file"]')
+#     file_input.set_input_files(zip_file_path)
+#     page.click('button[data-test-id="zip-file-submit"]')
+#     page.pause()
 
 
 @pytest.mark.skip(reason="This test is for testing test environment configuration.")
