@@ -3,20 +3,16 @@ import { unzipSync, zipSync } from 'fflate';
 import ignore from "ignore";
 
 document.addEventListener('DOMContentLoaded', function () {
-  const fileInput = document.getElementById('id_zip_file');
+  const zipFileInput = document.getElementById('id_zip_file');
   const removeFileBtn = document.getElementById('removeFileBtn');
-
-  insertText("Event listeners adding")
-  fileInput.addEventListener('change', handleFileInputChange);
-  removeFileBtn.addEventListener('click', handleRemoveFileClick);
-  insertText("Event listeners added")
-
   const folderForm = document.getElementById('folderForm');
-
-  folderForm.addEventListener('submit', handleFolderSubmit);
-
   const forms = document.querySelectorAll('form');
 
+  insertText("Event listeners adding")
+
+  zipFileInput.addEventListener('change', handleFileInputChange);
+  removeFileBtn.addEventListener('click', handleRemoveFileClick);
+  folderForm.addEventListener('submit', handleFolderSubmit);
   forms.forEach(form => {
     const submitButton = form.querySelector('button[type="submit"]');
     const inputFields = form.querySelectorAll('input, textarea');
@@ -28,17 +24,8 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     });
   });
-});
 
-/**
- * Processes files based on .gitignore rules.
- * @param {FileList} files - The list of files to process.
- * @param {string} manualGitignoreContent - The manually provided .gitignore content.
- * @returns {File[]} - An array of filtered files.
- */
-function processFiles(files, manualGitignoreContent = '') {
-  // Filter .gitignore files from the file list
-  const gitignoreFiles = Array.from(files).filter(file => file.name === '.gitignore');
+  insertText("Event listeners added")
 
   const ig = ignore().add(manualGitignoreContent);
 
@@ -178,6 +165,43 @@ async function handleFolderSubmit(event) {
   zipFileInput.files = dataTransfer.files;
 
   document.querySelector('form[method="post"][enctype="multipart/form-data"]').submit();
+}
+
+/**
+ * Processes files based on .gitignore rules.
+ * @param {FileList} files - The list of files to process.
+ * @param {string} manualGitignoreContent - The manually provided .gitignore content.
+ * @returns {File[]} - An array of filtered files.
+ */
+function processFiles(files, manualGitignoreContent = '') {
+  // Filter .gitignore files from the file list
+  const gitignoreFiles = Array.from(files).filter(file => file.name === '.gitignore');
+
+  const ig = ignore().add(manualGitignoreContent);
+
+  // Filter files based on the .gitignore rules
+  return Array.from(files).filter(file => {
+    // Check if the file is ignored by the manual .gitignore content
+    if (ig.ignores(file.webkitRelativePath)) {
+      return false;
+    }
+
+    // Check if the file is ignored by any .gitignore file in its directory or parent directories
+    for (const gitignoreFile of gitignoreFiles) {
+      const gitignoreDirectory = gitignoreFile.webkitRelativePath.replace('.gitignore', '');
+      if (file.webkitRelativePath.startsWith(gitignoreDirectory)) {
+        const reader = new FileReader();
+        reader.readAsText(gitignoreFile);
+        const gitignoreContent = reader.result;
+        const gitignoreIg = ignore().add(gitignoreContent);
+        if (gitignoreIg.ignores(file.webkitRelativePath)) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  });
 }
 
 
