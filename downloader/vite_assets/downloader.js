@@ -143,13 +143,12 @@ async function handleFolderSubmit(event) {
 
   const manualGitignoreContent = document.getElementById('exclusionRules').value;
   // Filter files based on .gitignore rules
-  const filteredFiles = processFiles(files, manualGitignoreContent);
+  const filteredFiles = await processFiles(files, manualGitignoreContent);
 
   // Iterate over filtered files and add them to zipData object
   for (let i = 0; i < filteredFiles.length; i++) {
     const file = filteredFiles[i];
     const relativePath = file.webkitRelativePath;
-    console.log({file, relativePath});
     const fileData = await file.arrayBuffer();
     zipData[relativePath] = new Uint8Array(fileData);
   }
@@ -172,37 +171,61 @@ async function handleFolderSubmit(event) {
  * @param {string} manualGitignoreContent - The manually provided .gitignore content.
  * @returns {File[]} - An array of filtered files.
  */
-function processFiles(files, manualGitignoreContent = '') {
-  // Filter .gitignore files from the file list
+async function processFiles(files, manualGitignoreContent = '') {
   const gitignoreFiles = Array.from(files).filter(file => file.name === '.gitignore');
 
   const ig = ignore().add(manualGitignoreContent);
 
-  // Filter files based on the .gitignore rules
-  return Array.from(files).filter(file => {
-    // Check if the file is ignored by the manual .gitignore content
+  const filteredFiles = [];
+
+  for (const file of Array.from(files)) {
+    console.log('Processing file:', file.webkitRelativePath);
+
     if (ig.ignores(file.webkitRelativePath)) {
-      return false;
+      console.log('Ignored by manual .gitignore:', file.webkitRelativePath);
+      continue;
     }
 
-    // Check if the file is ignored by any .gitignore file in its directory or parent directories
+    let ignored = false;
+
     for (const gitignoreFile of gitignoreFiles) {
       const gitignoreDirectory = gitignoreFile.webkitRelativePath.replace('.gitignore', '');
+      console.log(`Checking .gitignore file in directory: ${gitignoreDirectory} against file: ${file.webkitRelativePath}`);
+
       if (file.webkitRelativePath.startsWith(gitignoreDirectory)) {
-        const reader = new FileReader();
-        reader.readAsText(gitignoreFile);
-        const gitignoreContent = reader.result;
+        console.log('Checking .gitignore file:', gitignoreFile.webkitRelativePath);
+        const gitignoreContent = await readFileAsync(gitignoreFile);
         const gitignoreIg = ignore().add(gitignoreContent);
+
         if (gitignoreIg.ignores(file.webkitRelativePath)) {
-          return false;
+          console.log('Ignored by .gitignore file:', file.webkitRelativePath);
+          ignored = true;
+          break;
         }
       }
     }
 
-    return true;
-  });
+    if (!ignored) {
+      console.log('Not ignored:', file.webkitRelativePath);
+      filteredFiles.push(file);
+    }
+  }
+
+  return filteredFiles;
 }
 
+function readFileAsync(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = function() {
+      resolve(reader.result);
+    };
+    reader.onerror = function() {
+      reject(reader.error);
+    };
+    reader.readAsText(file);
+  });
+}
 
 function insertText(text) {
   // const p = document.createElement('p');
