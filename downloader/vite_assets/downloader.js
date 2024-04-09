@@ -27,32 +27,31 @@ document.addEventListener('DOMContentLoaded', function () {
 
   insertText("Event listeners added")
 
-  const ig = ignore().add(manualGitignoreContent);
+  document.getElementById('fillFormButton').addEventListener('click', function () {
+        const repoUrl = 'https://github.com/dmwyatt/gh_repo_download';
+        const inputField = document.querySelector('input[name="repo_url"]');
+        inputField.value = '';
+        let i = 0;
+        const totalDuration = 425;
+        const timeoutDuration = totalDuration / repoUrl.length;
 
-  // Filter files based on the .gitignore rules
-  return Array.from(files).filter(file => {
-    // Check if the file is ignored by the manual .gitignore content
-    if (ig.ignores(file.webkitRelativePath)) {
-      return false;
-    }
+        inputField.classList.add('glow');
 
-    // Check if the file is ignored by any .gitignore file in its directory or parent directories
-    for (const gitignoreFile of gitignoreFiles) {
-      const gitignoreDirectory = gitignoreFile.webkitRelativePath.replace('.gitignore', '');
-      if (file.webkitRelativePath.startsWith(gitignoreDirectory)) {
-        const reader = new FileReader();
-        reader.readAsText(gitignoreFile);
-        const gitignoreContent = reader.result;
-        const gitignoreIg = ignore().add(gitignoreContent);
-        if (gitignoreIg.ignores(file.webkitRelativePath)) {
-          return false;
+        function typeEffect() {
+          if (i < repoUrl.length) {
+            inputField.value += repoUrl.charAt(i);
+            i++;
+            setTimeout(typeEffect, timeoutDuration);
+          } else {
+            inputField.classList.remove('glow');
+            inputField.dispatchEvent(new Event('input'));
+          }
         }
-      }
-    }
 
-    return true;
-  });
-}
+        typeEffect();
+      });
+});
+
 
 // Function to manage error display
 function updateZipFileError(message) {

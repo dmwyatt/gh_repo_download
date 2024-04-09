@@ -306,34 +306,6 @@ Thumbs.db
          downloading repositories.</p>
     </div>
 
-    <script>
-
-      document.getElementById('fillFormButton').addEventListener('click', function () {
-        const repoUrl = 'https://github.com/dmwyatt/gh_repo_download';
-        const inputField = document.querySelector('input[name="repo_url"]');
-        inputField.value = '';
-        let i = 0;
-        const totalDuration = 425;
-        const timeoutDuration = totalDuration / repoUrl.length;
-
-        inputField.classList.add('glow');
-
-        function typeEffect() {
-          if (i < repoUrl.length) {
-            inputField.value += repoUrl.charAt(i);
-            i++;
-            setTimeout(typeEffect, timeoutDuration);
-          } else {
-            inputField.classList.remove('glow');
-            inputField.dispatchEvent(new Event('input'));
-          }
-        }
-
-        typeEffect();
-      });
-
-    </script>
-
 
   </div>
 {% endblock content %}
