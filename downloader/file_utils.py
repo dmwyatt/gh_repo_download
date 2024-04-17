@@ -304,7 +304,10 @@ async def extract_text_files(
                 if is_plain_text:
                     _, encoding = detect_internal_encoding_from_bytes(first_chunk)
                     if encoding:
-                        content = file.read().decode(encoding)
+                        try:
+                            content = file.read().decode(encoding)
+                        except LookupError:
+                            content = file.read().decode("utf-8", errors="replace")
                     else:
                         content = file.read().decode("utf-8", errors="replace")
 
