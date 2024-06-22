@@ -1,10 +1,9 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load django_vite %}
-
 {% block title %}GitHub Repository Downloader{% endblock %}
 {% block extra_style %}
-  <style>
+    <style>
       form {
           border: 1px solid #ccc;
           padding: 20px;
@@ -76,121 +75,87 @@
           margin-bottom: 5px;
       }
 
-  </style>
+    </style>
 {% endblock %}
-
 {% block head %}
-  {% vite_hmr_client %}
-  {% vite_asset 'downloader/vite_assets/downloader.js' %}
-  {{ MAX_REPO_SIZE|json_script:"max-repo-size" }}
+    {% vite_hmr_client %}
+    {% vite_asset 'downloader/vite_assets/downloader.js' %}
+    {{ MAX_REPO_SIZE|json_script:"max-repo-size" }}
 {% endblock head %}
-
-
 {% block content %}
-  <div class="container">
-    <h1>Create Text Context</h1>
-
-    {#    <img src="{% static 'downloader/dummy.txt' %}" alt="Dummy File">#}
-
-    <section>
-      {% if error_message %}
-        <p class="error-message">{{ error_message }}</p>
-      {% endif %}
-
-
-      <div class="forms">
-
-        <h2>From a GitHub Repository</h2>
-
-
-        {% if repo_url_form.non_field_errors %}
-          {% for error in repo_url_form.non_field_errors %}
-            <p class="error-message">{{ error }}</p>
-          {% endfor %}
-        {% endif %}
-
-        <form method="post">
-          {% csrf_token %}
-          {{ repo_url_form.repo_url.label }}
-          {{ repo_url_form.repo_url }}
-          {% if repo_url_form.repo_url.errors %}
-            <div class="error-message" data-test-id="repo-url-server-errors">
-              {{ repo_url_form.repo_url.errors }}
-            </div>
-          {% endif %}
-          <button type="submit" disabled style="margin-top: 10px">Submit</button>
-          <button id="fillFormButton" type="button">Test it out with this site's repo!
-          </button>
-        </form>
-
-        <h2>From a Zip File</h2>
-
-        {% if zip_file_form.non_field_errors %}
-          {% for error in zip_file_form.non_field_errors %}
-            <p class="error-message">{{ error }}</p>
-          {% endfor %}
-        {% endif %}
-
-        <form method="post" enctype="multipart/form-data">
-          {% csrf_token %}
-          {{ zip_file_form.zip_file.label }}
-          <div class="zip-file-upload">
-            {{ zip_file_form.zip_file }}
-            <button type="button" id="removeFileBtn" style="display: none;">Remove File
-            </button>
-          </div>
-          {% if zip_file_form.zip_file.errors %}
-            <div class="error-message" data-test-id="zip-file-server-errors">
-              {{ zip_file_form.zip_file.errors }}
-            </div>
-          {% endif %}
-          <div id="zipFileError"
-               class="error-message-def-hidden"
-               style="display:none;"></div>
-          <div class="instructions">
-            <p>Select a ZIP file containing the text files you want to process.</p>
-          </div>
-          <button type="submit"
-                  style="margin-top: 10px"
-                  data-test-id="zip-file-submit"
-                  disabled>Submit
-          </button>
-        </form>
-
-        <h2>From a Folder</h2>
-
-        {% if folder_form.non_field_errors %}
-          {% for error in folder_form.non_field_errors %}
-            <p class="error-message">{{ error }}</p>
-          {% endfor %}
-        {% endif %}
-
-        <form id="folderForm">
-          <div>
-            <label for="folderInput">Select Folder:</label>
-            <input type="file" id="folderInput" webkitdirectory directory/>
-          </div>
-
-          <div>
-            <p class="instructions">
-              The rules provided below will be used to exclude specific files and
-              directories from the selected folder during processing. These rules are in
-              addition to the default exclusions.
-            </p>
-            <p class="instructions">
-              Each line should contain a single rule specifying a file or directory
-              pattern to exclude. You can use wildcards (*) to match multiple files or
-              directories.
-            </p>
-            <p class="instructions">
-              For example, "*.log" will exclude all files with the ".log" extension, and
-              "temp/" will exclude a directory named "temp" and its contents.
-            </p>
-            <p class="instructions">
-              You can modify these rules or add additional ones to customize which files
-              and directories are included in the processing.
-            </p>
-            <textarea id="exclusionRules" name="exclusion_rules">
+    <div class="container">
+        <h1>Create Text Context</h1>
+        <section>
+            {% if error_message %}<p class="error-message">{{ error_message }}</p>{% endif %}
+            <div class="forms">
+                <h2>From a GitHub Repository</h2>
+                {% if repo_url_form.non_field_errors %}
+                    {% for error in repo_url_form.non_field_errors %}<p class="error-message">{{ error }}</p>{% endfor %}
+                {% endif %}
+                <form method="post">
+                    {% csrf_token %}
+                    {{ repo_url_form.repo_url.label }}
+                    {{ repo_url_form.repo_url }}
+                    {% if repo_url_form.repo_url.errors %}
+                        <div class="error-message" data-test-id="repo-url-server-errors">{{ repo_url_form.repo_url.errors }}</div>
+                    {% endif %}
+                    <button type="submit" disabled style="margin-top: 10px">Submit</button>
+                    <button id="fillFormButton" type="button">Test it out with this site's repo!</button>
+                </form>
+                <h2>From a Zip File</h2>
+                {% if zip_file_form.non_field_errors %}
+                    {% for error in zip_file_form.non_field_errors %}<p class="error-message">{{ error }}</p>{% endfor %}
+                {% endif %}
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ zip_file_form.zip_file.label }}
+                    <div class="zip-file-upload">
+                        {{ zip_file_form.zip_file }}
+                        <button type="button" id="removeFileBtn" style="display: none;">Remove File</button>
+                    </div>
+                    {% if zip_file_form.zip_file.errors %}
+                        <div class="error-message" data-test-id="zip-file-server-errors">{{ zip_file_form.zip_file.errors }}</div>
+                    {% endif %}
+                    <div id="zipFileError"
+                         class="error-message-def-hidden"
+                         style="display:none"></div>
+                    <div class="instructions">
+                        <p>Select a ZIP file containing the text files you want to process.</p>
+                    </div>
+                    <button type="submit"
+                            style="margin-top: 10px"
+                            data-test-id="zip-file-submit"
+                            disabled>Submit</button>
+                </form>
+                <h2>From a Folder</h2>
+                {% if folder_form.non_field_errors %}
+                    {% for error in folder_form.non_field_errors %}<p class="error-message">{{ error }}</p>{% endfor %}
+                {% endif %}
+                <form id="folderForm">
+                    <div>
+                        <label for="folderInput">Select Folder:</label>
+                        <input type="file" id="folderInput" webkitdirectory directory />
+                    </div>
+                    <div>
+                        <p class="instructions">
+                            The rules provided below will be used to exclude specific files and
+                            directories from the selected folder during processing. These rules are in
+                            addition to the default exclusions.
+                        </p>
+                        <p class="instructions">
+                            Each line should contain a single rule specifying a file or directory
+                            pattern to exclude. You can use wildcards (*) to match multiple files or
+                            directories.
+                        </p>
+                        <p class="instructions">
+                            For example, "*.log" will exclude all files with the ".log" extension, and
+                            "temp/" will exclude a directory named "temp" and its contents.
+                        </p>
+                        <p class="instructions">
+                            You can modify these rules or add additional ones to customize which files
+                            and directories are included in the processing.
+                        </p>
+                        <textarea id="exclusionRules" name="exclusion_rules">
 node_modules/
 .venv/
 venv/
@@ -221,93 +186,95 @@ __pycache__/
 .mypy_cache/
 .pytest_cache/
     </textarea>
-          </div>
-
-          <button type="submit" disabled>Submit Folder</button>
-        </form>
-
-      </div>
-    </section>
-
-    <div class="section">
-      <h2>What is this site?</h2>
-      <p>This site simplifies the process of collecting text from 
-         multiple sources into a single text file. 
-      </p>
+                    </div>
+                    <button type="submit" disabled>Submit Folder</button>
+                </form>
+            </div>
+        </section>
+        <div class="section">
+            <h2>What is this site?</h2>
+            <p>
+                This site simplifies the process of collecting text from
+                multiple sources into a single text file.
+            </p>
+        </div>
+        <div class="section">
+            <h2>Why was this tool created?</h2>
+            <p>
+                This tool was created to simplify the process of sharing context with advanced
+                chatbots such as ChatGPT, Claude, and Gemini. By allowing users to compile and
+                convert diverse digital content into a single text file, it facilitates easy
+                context provision to chatbots for enhanced understanding and interaction with
+                the material. You can find the source code for this site
+                <a href="https://github.com/dmwyatt/gh_repo_download#what-is-this-project">here</a>.
+            </p>
+            <p>
+                Here are a few examples of how this tool can be useful when interacting with
+                chatbots:
+            </p>
+            <ul>
+                <li>
+                    Share the source code of a project with the chatbot to discuss implementation
+                    details or get suggestions for improvements.
+                </li>
+                <li>
+                    Provide the chatbot with a repository containing documentation or research
+                    papers to facilitate a conversation about the topics covered.
+                </li>
+                <li>
+                    Use the downloaded text file to give the chatbot context about a specific
+                    topic
+                    or domain, enabling more informed and relevant responses.
+                </li>
+            </ul>
+        </div>
+        <div class="section">
+            <h2>How to use:</h2>
+            <ol>
+                <li>Enter the URL of a GitHub repository in the form below.</li>
+                <li>Click the "Download" button.</li>
+                <li>The site will process the repository and generate a downloadable text file.</li>
+                <li>
+                    On the next page, click the "Download file" link to save the text file
+                    locally.
+                </li>
+            </ol>
+        </div>
+        <div class="section">
+            <h2>Limitations and Considerations:</h2>
+            <ul>
+                <li>
+                    The maximum size of repositories that can be downloaded
+                    is {{ MAX_REPO_SIZE|filesizeformat }}.
+                </li>
+                <li>Only text files from the repository will be included in the downloaded file.</li>
+                <li>The downloaded file is a concatenation of the text files from the repository.</li>
+                <li>We'll stop after processing {{ MAX_FILE_COUNT }} files from the repo.</li>
+                <li>We'll only deliver up to {{ MAX_TEXT_SIZE|filesizeformat }} of text.</li>
+            </ul>
+        </div>
+        <div class="section">
+            <h2>FAQ:</h2>
+            <p>
+                <strong>Q: What types of files are included in the download?</strong>
+                <br>
+                A: Only text files from the repository are included in the downloaded file.
+            </p>
+            <p>
+                <strong>Q: What is the size limit for the repositories that can be
+                downloaded?</strong>
+                <br>
+                A: The maximum size limit for repositories is {{ MAX_REPO_SIZE|filesizeformat }}.
+                Repositories exceeding this limit cannot be downloaded.
+            </p>
+        </div>
+        <div class="section">
+            <h2>Disclaimer:</h2>
+            <p>
+                This site is for informational purposes only. Users are responsible for complying
+                with GitHub's terms of service and any applicable licenses or permissions when
+                downloading repositories.
+            </p>
+        </div>
     </div>
-
-    <div class="section">
-      <h2>Why was this tool created?</h2>
-      <p>This tool was created to simplify the process of sharing context with advanced
-         chatbots such as ChatGPT, Claude, and Gemini. By allowing users to compile and
-         convert diverse digital content into a single text file, it facilitates easy
-         context provision to chatbots for enhanced understanding and interaction with
-         the material. You can find the source code for this site
-        <a href="https://github.com/dmwyatt/gh_repo_download#what-is-this-project">here</a>.
-      </p>
-
-      <p>Here are a few examples of how this tool can be useful when interacting with
-         chatbots:</p>
-      <ul>
-        <li>Share the source code of a project with the chatbot to discuss implementation
-            details or get suggestions for improvements.
-        </li>
-        <li>Provide the chatbot with a repository containing documentation or research
-            papers to facilitate a conversation about the topics covered.
-        </li>
-        <li>Use the downloaded text file to give the chatbot context about a specific
-            topic
-            or domain, enabling more informed and relevant responses.
-        </li>
-      </ul>
-    </div>
-
-    <div class="section">
-      <h2>How to use:</h2>
-      <ol>
-        <li>Enter the URL of a GitHub repository in the form below.</li>
-        <li>Click the "Download" button.</li>
-        <li>The site will process the repository and generate a downloadable text file.
-        </li>
-        <li>On the next page, click the "Download file" link to save the text file
-            locally.
-        </li>
-      </ol>
-    </div>
-
-    <div class="section">
-      <h2>Limitations and Considerations:</h2>
-      <ul>
-        <li>The maximum size of repositories that can be downloaded
-            is {{ MAX_REPO_SIZE|filesizeformat }}.
-        </li>
-        <li>Only text files from the repository will be included in the downloaded file.
-        </li>
-        <li>The downloaded file is a concatenation of the text files from the repository.
-        </li>
-        <li>We'll stop after processing {{ MAX_FILE_COUNT }} files from the repo.</li>
-        <li>We'll only deliver up to {{ MAX_TEXT_SIZE|filesizeformat }} of text.</li>
-      </ul>
-    </div>
-
-    <div class="section">
-      <h2>FAQ:</h2>
-      <p><strong>Q: What types of files are included in the download?</strong><br>
-        A: Only text files from the repository are included in the downloaded file.</p>
-
-      <p><strong>Q: What is the size limit for the repositories that can be
-                 downloaded?</strong><br>
-        A: The maximum size limit for repositories is {{ MAX_REPO_SIZE|filesizeformat }}.
-        Repositories exceeding this limit cannot be downloaded.</p>
-    </div>
-
-    <div class="section">
-      <h2>Disclaimer:</h2>
-      <p>This site is for informational purposes only. Users are responsible for complying
-         with GitHub's terms of service and any applicable licenses or permissions when
-         downloading repositories.</p>
-    </div>
-
-
-  </div>
 {% endblock content %}
