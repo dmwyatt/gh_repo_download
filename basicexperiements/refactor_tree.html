@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Tree Structure Demo</title>
+        <script src="tree.js"></script>
+        <style>
+        </style>
+    </head>
+    <body>
+        <div id="tree-container"></div>
+        <script>
+            // Function to generate a tree with random numbers of files and directories
+            function generateTree(node, currentDepth, maxDepth, maxItemsPerNode) {
+                if (currentDepth > maxDepth) return;
+
+                // Random number of children (files and directories)
+                const numFiles = Math.floor(Math.random() * maxItemsPerNode);
+                const numDirectories = Math.floor(Math.random() * maxItemsPerNode);
+
+                // Add files
+                for (let i = 0; i < numFiles; i++) {
+                    const fileNode = new TreeNode({
+                        name: `${node.data.name}-file${i}`,
+                        type: 'file'
+                    });
+                    node.addChild(fileNode);
+                }
+
+                // Add directories
+                for (let i = 0; i < numDirectories; i++) {
+                    const dirNode = new TreeNode({
+                        name: `${node.data.name}-dir${i}`,
+                        type: 'folder'
+                    });
+                    node.addChild(dirNode);
+                    generateTree(dirNode, currentDepth + 1, maxDepth, maxItemsPerNode);
+                }
+            }
+
+            // Initialize the root node
+            const rootNode = new TreeNode({ name: 'Root', type: 'folder' });
+
+            // Generate the tree with up to 4 levels deep and up to 10 items per node
+            generateTree(rootNode, 1, 4, 10);
+
+            // Initialize the tree and render it
+            const tree = new Tree([rootNode]);
+            const container = document.getElementById('tree-container');
+            const renderer = new TreeRenderer(tree, container);
+            renderer.render();
+        </script>
+    </body>
+</html>
