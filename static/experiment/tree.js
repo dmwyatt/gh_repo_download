@@ -52,34 +52,34 @@ class TreeRenderer {
       const style = document.createElement("style");
       style.id = styleId;
       style.textContent = `
-                        .tree-node {
-                            margin-left: 20px;
-                        }
-                        .node-content {
-                            display: flex;
-                            align-items: center;
-                            user-select: none;
-                            padding: 5px;
-                        }
-                        .icon, .chevron {
-                            width: 24px;
-                            height: 24px;
-                            margin-right: 5px;
-                        }
-                        .chevron {
-                            transition: transform 0.3s ease;
-                            cursor: pointer;
-                        }
-                        .open > .node-content > .chevron {
-                            transform: rotate(90deg);
-                        }
-                        .checkbox {
-                            margin-right: 5px;
-                        }
-                        .node-label {
-                            cursor: pointer;
-                        }
-                    `;
+        .tree-node {
+          margin-left: 20px;
+        }
+        .node-content {
+          display: flex;
+          align-items: center;
+          user-select: none;
+          padding: 5px;
+        }
+        .icon, .chevron {
+          width: 24px;
+          height: 24px;
+          margin-right: 5px;
+        }
+        .chevron {
+          transition: transform 0.3s ease;
+          cursor: pointer;
+        }
+        .open > .node-content > .chevron {
+          transform: rotate(90deg);
+        }
+        .checkbox {
+          margin-right: 5px;
+        }
+        .node-label {
+          cursor: pointer;
+        }
+      `;
       document.head.appendChild(style);
     }
   }
