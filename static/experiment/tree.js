@@ -87,7 +87,7 @@ class TreeRenderer {
   async render() {
     this.containerElement.innerHTML = "";
     for (const node of this.tree.nodes) {
-      await this.renderNode(node, this.containerElement);
+      await this.renderNode(node, this.containerElement, true);
     }
   }
 
