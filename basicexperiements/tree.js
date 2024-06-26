@@ -15,6 +15,8 @@ class TreeNode {
   }
 }
 
+window.TreeNode = TreeNode;
+
 class Tree {
   constructor(nodes = []) {
     this.nodes = nodes;
@@ -24,6 +26,8 @@ class Tree {
     this.nodes.push(node);
   }
 }
+
+window.Tree = Tree;
 
 class TreeStateManager {
   constructor() {
@@ -269,6 +273,8 @@ class TreeRenderer {
     }
   }
 }
+
+window.TreeRenderer = TreeRenderer;
 
 function defaultNodeTemplate(node, options) {
   const isFolder = node.data.type === "folder";
