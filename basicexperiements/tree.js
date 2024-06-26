@@ -1,6 +1,6 @@
 import EventManager from "./EventManager.js";
 
-class TreeNode {
+export class TreeNode {
   constructor(data) {
     this.data = data;
     this.children = [];
@@ -15,9 +15,7 @@ class TreeNode {
   }
 }
 
-window.TreeNode = TreeNode;
-
-class Tree {
+export class Tree {
   constructor(nodes = []) {
     this.nodes = nodes;
   }
@@ -26,8 +24,6 @@ class Tree {
     this.nodes.push(node);
   }
 }
-
-window.Tree = Tree;
 
 class TreeStateManager {
   constructor() {
@@ -196,7 +192,7 @@ class TreeNodeRenderer {
   }
 }
 
-class TreeRenderer {
+export class TreeRenderer {
   constructor(tree, containerElement, options = {}) {
     this.tree = tree;
     this.containerElement = containerElement;
@@ -273,8 +269,6 @@ class TreeRenderer {
     }
   }
 }
-
-window.TreeRenderer = TreeRenderer;
 
 function defaultNodeTemplate(node, options) {
   const isFolder = node.data.type === "folder";
