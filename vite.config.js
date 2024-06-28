@@ -14,6 +14,7 @@ export default defineConfig({
       input: {
         downloader: resolve("./downloader/vite_assets/downloader.js"),
         download: resolve("./downloader/vite_assets/download.js"),
+        app: resolve("./downloader/vite_assets/new/app.js"),
       },
     },
   },
