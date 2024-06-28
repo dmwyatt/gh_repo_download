@@ -226,9 +226,10 @@ class TreeRenderer {
     this.options = {
       onToggle: () => {},
       onSelect: () => {},
+      selectionValidator: () => true,
       ...options,
     };
-    this.stateManager = new TreeStateManager();
+    this.stateManager = new TreeStateManager(this.options.selectionValidator);
     this.injectCSS();
   }
 
