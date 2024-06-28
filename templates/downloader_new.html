@@ -20,11 +20,68 @@
         githubUrl: "",
         selectedItems: [],
         folderTreeHelper: null,
+        selectedCount: 0,
+        selectedSize: 0,
+        maxFiles: 3,
+        maxSizeMB: 500,
 
         init() {
+          const selectionValidator = (currentSelection, node, isSelecting) => {
+            let newCount = this.selectedCount;
+            let newSize = this.selectedSize;
+
+            const nodeFileCount = this.folderTreeHelper.getFileCount(node);
+            const nodeSize = this.folderTreeHelper.getTotalSize(node);
+
+            if (isSelecting) {
+              newCount += nodeFileCount;
+              newSize += nodeSize;
+            } else {
+              newCount -= nodeFileCount;
+              newSize -= nodeSize;
+            }
+
+            console.info({newCount, newSize, nodeFileCount, nodeSize});
+
+            return newCount <= this.maxFiles && newSize <= this.maxSizeMB * 1024 * 1024;
+          };
+
           this.folderTreeHelper = new FolderTreeHelper(
-              document.getElementById("tree-container")
+              document.getElementById("tree-container"),
+              selectionValidator
           );
+
+          document.addEventListener('selectionChanged', (event) => {
+            console.log("selection change", event);
+            const selectedNodes = event.detail.selectedNodes;
+            this.selectedCount = selectedNodes.reduce((count, node) => count + this.folderTreeHelper.getFileCount(node), 0);
+            this.selectedSize = selectedNodes.reduce((size, node) => size + this.folderTreeHelper.getTotalSize(node), 0);
+            console.log("selected count", this.selectedCount);
+            console.log("selected size", this.selectedSize);
+            this.updateSelectionDisplay();
+          });
+
+          document.addEventListener('selectionInvalid', (event) => {
+            console.log("Invalid selection", event);
+            const {node, attemptedState} = event.detail;
+            const action = attemptedState ? 'select' : 'deselect';
+            const nodeType = node.data.type === 'folder' ? 'folder' : 'file';
+            const reason = this.folderTreeHelper.getFileCount(node) > this.maxFiles
+                           ? `exceed the limit of ${this.maxFiles} files`
+                           : `exceed the limit of ${this.maxSizeMB} MB`;
+
+            alert(`Cannot ${action} this ${nodeType}. It would ${reason}.`);
+          });
+        },
+
+        updateSelectionDisplay() {
+          // Update the UI to show current selection status
+          // This could update a progress bar, change colors, etc.
+        },
+
+        showSelectionInvalidWarning(node, attemptedState) {
+          const action = attemptedState ? 'select' : 'deselect';
+          alert(`Cannot ${action} "${node.data.name}". It would exceed the file count or size limit.`);
         },
 
         async selectFolder() {
