@@ -1,0 +1,253 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text File Consolidator</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+        rel="stylesheet">
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+
+
+  <script src="{% static 'js/tree.js' %}"></script>
+  {#  <script src="{% static 'js/app.js' %}"></script>#}
+  <script src="{% static 'js/FolderTreeHelper.js' %}"></script>
+  <script>
+    function app() {
+      return {
+        githubUrl: "",
+        selectedItems: [],
+        folderTreeHelper: null,
+
+        init() {
+          this.folderTreeHelper = new FolderTreeHelper(
+              document.getElementById("tree-container")
+          );
+        },
+
+        async selectFolder() {
+          document.getElementById('folder-dialog').showModal();
+          const tree = await this.folderTreeHelper.selectFolder();
+          if (tree) {
+            console.log("Folder selected and tree rendered");
+          }
+        },
+
+        confirmAndUploadFiles() {
+          this.selectedItems = this.folderTreeHelper.getSelectedItems();
+          console.log("Selected items:", this.selectedItems);
+          this.closeDialog();
+          this.submitFileUploadForm();
+        },
+
+        closeDialog() {
+          document.getElementById('folder-dialog').close();
+          document.getElementById("tree-container").innerHTML = "";
+        },
+
+        async submitFileUploadForm() {
+          const form = document.getElementById('file-upload-form');
+
+          // Clear any existing file inputs
+          form.querySelectorAll('input[type="file"]').forEach(input => input.remove());
+
+          const filePromises = this.selectedItems.map(async (item) => {
+            if (isFile(item)) {
+              const file = await getFileFromItem(item);
+              if (file) {
+                // Create a new File object with the relative path as the name
+                return new File([file], item.path, {type: file.type});
+              }
+            }
+            return null;
+          });
+
+          const files = (await Promise.all(filePromises)).filter(file => file !== null);
+
+          // Now that we have all File objects, we can add them to the form
+          files.forEach((file) => {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.name = 'files[]';
+            fileInput.style.display = 'none';
+
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            fileInput.files = dt.files;
+
+            form.appendChild(fileInput);
+          });
+
+          // Submit the form
+          form.submit();
+        },
+      }
+    }
+  </script>
+  <style>
+      #select-folder-btn {
+          margin-bottom: 20px;
+      }
+
+      .folder-tree-loading {
+          display: none;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+      }
+
+      .spinner {
+          border: 4px solid #f3f3f3;
+          border-top: 4px solid #3498db;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+          0% {
+              transform: rotate(0deg);
+          }
+          100% {
+              transform: rotate(360deg);
+          }
+      }
+  </style>
+  <style>
+      .folder-tree-loading {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 20px;
+      }
+
+      .spinner {
+          border: 4px solid #f3f3f3;
+          border-top: 4px solid #3498db;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+          0% {
+              transform: rotate(0deg);
+          }
+          100% {
+              transform: rotate(360deg);
+          }
+      }
+
+      .progress-container {
+          width: 100%;
+          max-width: 300px;
+          background-color: #f0f0f0;
+          border-radius: 4px;
+          overflow: hidden;
+          margin-top: 10px;
+      }
+
+      .progress-bar {
+          width: 0;
+          height: 20px;
+          background-color: #4CAF50;
+      }
+
+      .loading-message {
+          margin-top: 10px;
+          text-align: center;
+      }
+  </style>
+  <style>
+      dialog::backdrop {
+          background-color: rgba(0, 0, 0, 0.5);
+      }
+
+      dialog {
+          width: 90%;
+          max-width: 600px;
+          padding: 20px;
+          border-radius: 8px;
+          border: none;
+      }
+
+      #tree-container {
+          height: 400px;
+          overflow-y: auto;
+      }
+  </style>
+</head>
+<body x-data="app" class="bg-gray-100 h-screen flex items-center justify-center">
+<div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+  <h1 class="text-2xl font-bold mb-2 text-center">Text File Consolidation</h1>
+  <p class="text-gray-600 text-center mb-6">
+    Combine all plain text files from a GitHub repo or local folder into one file.
+  </p>
+  <form action="/submit-github-url" method="POST" id="github-url-form">
+    <div class="mb-6">
+      <label for="github-url" class="block text-sm font-medium text-gray-700 mb-2">
+        GitHub Repository URL
+      </label>
+      <div class="flex">
+        <input type="url"
+               id="github-url"
+               name="github-url"
+               placeholder="https://github.com/username/repo"
+               required
+               class="flex-grow px-3 py-2 border border-r-0 border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <button type="submit"
+                class="bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+          Submit
+        </button>
+      </div>
+    </div>
+  </form>
+  <div class="relative py-4">
+    <div class="absolute inset-0 flex items-center">
+      <div class="w-full border-t border-gray-300"></div>
+    </div>
+    <div class="relative flex justify-center">
+      <span class="bg-white px-4 text-sm text-gray-500">OR</span>
+    </div>
+  </div>
+  <div class="mb-6">
+    <button type="button"
+            @click="selectFolder()"
+            class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+      Select Local Folder
+    </button>
+  </div>
+
+  <form id="file-upload-form"
+        action="/your-backend-endpoint"
+        method="POST"
+        enctype="multipart/form-data"
+        class="hidden">
+    <!-- File inputs will be dynamically added here -->
+    <input type="hidden" name="file_paths" id="file-paths-input">
+  </form>
+</div>
+
+<dialog id="folder-dialog">
+  <h2 class="text-xl font-bold mb-4">Folder Structure</h2>
+  <div id="tree-container"></div>
+  <div class="mt-4 flex justify-end">
+    <button @click="closeDialog()"
+            class="bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 mr-2">
+      Cancel
+    </button>
+    <button @click="confirmAndUploadFiles()"
+            class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+      Confirm and Upload
+    </button>
+  </div>
+</dialog>
+
+
+</body>
+</html>
