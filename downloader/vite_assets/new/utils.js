@@ -1,4 +1,4 @@
-import { Zip } from "fflate";
+import { ZipPassThrough, Zip } from "fflate";
 
 /**
  * Reads a File or Blob as an ArrayBuffer.
@@ -82,7 +82,7 @@ function readFileAsArrayBuffer(file) {
           totalSize += fileData.length;
           processedFiles++;
 
-          const zipObject = new fflate.ZipPassThrough(file.name);
+          const zipObject = new ZipPassThrough(file.name);
           zipStream.add(zipObject);
           zipObject.push(fileData, true);
 

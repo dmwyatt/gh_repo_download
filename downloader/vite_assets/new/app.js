@@ -1,6 +1,7 @@
 import Alpine from "alpinejs";
 
 import { FolderTreeHelper, isFile, getFileFromItem } from "./FolderTreeHelper";
+import { zipFilesAsync } from "./utils";
 
 function app() {
   return {
@@ -90,11 +91,89 @@ function app() {
       }
     },
 
-    confirmAndUploadFiles() {
-      this.selectedItems = this.folderTreeHelper.getSelectedItems();
-      console.log("Selected items:", this.selectedItems);
-      this.closeDialog();
-      this.submitFileUploadForm();
+    async confirmAndUploadFiles() {
+      this.isProcessing = true;
+      this.showLoadingState();
+
+      try {
+        const selectedFiles =
+          await this.folderTreeHelper.getSelectedFilesForUpload();
+
+        if (selectedFiles.length === 0) {
+          throw new Error("No valid files selected for upload");
+        }
+
+        const { zipBuffer, errors } = await zipFilesAsync(
+          selectedFiles,
+          this.updateProgressBar,
+          this.handleZipError,
+        );
+
+        if (errors.length > 0) {
+          console.error("Errors occurred during zipping:", errors);
+          // Optionally, display these errors to the user
+        }
+
+        await this.submitZipFile(zipBuffer);
+      } catch (error) {
+        console.error("Error in confirmAndUploadFiles:", error);
+        alert(
+          error.message ||
+            "An error occurred during the upload process. Please try again.",
+        );
+      } finally {
+        this.isProcessing = false;
+        this.hideLoadingState();
+      }
+    },
+
+    showLoadingState() {
+      document.getElementById("loading-spinner").classList.remove("hidden");
+      document.getElementById("page-overlay").classList.remove("hidden");
+      document
+        .querySelectorAll("button, input")
+        .forEach((el) => (el.disabled = true));
+    },
+
+    hideLoadingState() {
+      document.getElementById("loading-spinner").classList.add("hidden");
+      document.getElementById("page-overlay").classList.add("hidden");
+      document
+        .querySelectorAll("button, input")
+        .forEach((el) => (el.disabled = false));
+    },
+
+    updateProgressBar(processedFiles, totalFiles, compressedSize, totalSize) {
+      const percentage = (processedFiles / totalFiles) * 100;
+      const progressBar = document.getElementById("progress-bar");
+      const progressText = document.getElementById("progress-text");
+      const progressContainer = document.getElementById("progress-container");
+
+      progressBar.style.width = `${percentage}%`;
+      progressText.textContent = `Processed ${processedFiles} of ${totalFiles} files (${(compressedSize / 1024 / 1024).toFixed(2)} MB / ${(totalSize / 1024 / 1024).toFixed(2)} MB)`;
+      progressContainer.classList.remove("hidden");
+    },
+
+    handleZipError(fileName, error) {
+      console.error(`Error zipping file ${fileName}:`, error);
+      // Optionally, display this error to the user
+      alert(`Error processing file: ${fileName}`);
+    },
+
+    async submitZipFile(zipBuffer) {
+      const form = document.getElementById("file-upload-form");
+      const fileInput = document.getElementById("zip-file-input");
+
+      const blob = new Blob([zipBuffer], { type: "application/zip" });
+      const file = new File([blob], "selected_files.zip", {
+        type: "application/zip",
+      });
+
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      fileInput.files = dataTransfer.files;
+
+      form.submit();
     },
 
     closeDialog() {

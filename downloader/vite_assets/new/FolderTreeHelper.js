@@ -192,12 +192,27 @@ export class FolderTreeHelper {
     return new Promise((resolve) => setTimeout(resolve, 0));
   }
 
-  getSelectedFilesForUpload() {
+  async getSelectedFilesForUpload() {
     const selectedItems = this.getSelectedItems();
-    return selectedItems
+    const filePromises = selectedItems
       .filter((item) => item.type === "file")
-      .map((item) => item.file || item.handle)
-      .filter(Boolean);
+      .map(async (item) => {
+        if (item.file instanceof File) {
+          return item.file;
+        } else if (item.handle && typeof item.handle.getFile === "function") {
+          try {
+            return await item.handle.getFile();
+          } catch (error) {
+            console.error(`Error getting file for ${item.name}:`, error);
+            return null;
+          }
+        } else {
+          console.error(`Unable to get File object for ${item.name}`);
+          return null;
+        }
+      });
+
+    return (await Promise.all(filePromises)).filter(Boolean);
   }
 
   getFileCount(node) {
