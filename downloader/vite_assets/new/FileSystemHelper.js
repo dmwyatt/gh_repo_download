@@ -1,4 +1,4 @@
-import { TreeNode } from "./tree/TreeNode.js";
+import { TreeNode } from "./tree/TreeNode";
 export class FileSystemHelper {
   constructor() {
     this.fileMap = new Map();
@@ -23,8 +23,7 @@ export class FileSystemHelper {
   }
 
   async buildTreeFromDirectoryHandle(directoryHandle, parentNode = null) {
-    const node = new TreeNode({
-      name: directoryHandle.name,
+    const node = new TreeNode(directoryHandle.name, {
       type: "folder",
       handle: directoryHandle,
       size: 0,
@@ -34,8 +33,7 @@ export class FileSystemHelper {
     for await (const entry of directoryHandle.values()) {
       if (entry.kind === "file") {
         const file = await entry.getFile();
-        const fileNode = new TreeNode({
-          name: entry.name,
+        const fileNode = new TreeNode(entry.name, {
           type: "file",
           handle: entry,
           size: file.size,
@@ -53,7 +51,7 @@ export class FileSystemHelper {
   async buildTreeFromFiles(files) {
     console.log(`Building tree from ${files.length} files`);
     const rootFolderName = files[0].webkitRelativePath.split("/")[0];
-    const rootNode = new TreeNode({ name: rootFolderName, type: "folder" });
+    const rootNode = new TreeNode(rootFolderName, { type: "folder" });
     const pathMap = new Map();
     pathMap.set(rootNode.data.name, rootNode);
 
