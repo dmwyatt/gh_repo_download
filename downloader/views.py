@@ -95,9 +95,11 @@ async def download_result_view(request, username, repo_name):
         # token limits, etc.  See
         # `downloader.tests.test_repo_download.test_invalid_repository_url` for
         # its real purpose.
-        exclude_files=["downloader/tests/data/gh_repo_dl_test.txt"]
-        if username == "dmwyatt" and repo_name == "gh_repo_download"
-        else [],
+        exclude_files=(
+            ["downloader/tests/data/gh_repo_dl_test.txt"]
+            if username == "dmwyatt" and repo_name == "gh_repo_download"
+            else []
+        ),
     )
 
     return render(
@@ -118,3 +120,7 @@ def _get_extraction_context(
         "zip_file_size": result.download_size,
         "total_uncompressed_size": result.uncompressed_size,
     }
+
+
+def new_downloader_view(request: HttpRequest) -> HttpResponse:
+    return render(request, "downloader_new.html")

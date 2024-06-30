@@ -10,6 +10,7 @@ urlpatterns = [
         views.download_result_view,
         name="download_result",
     ),
+    path("newdl/", views.new_downloader_view, name="new_download"),
 ]
 
 if settings.DEBUG:
