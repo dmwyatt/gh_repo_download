@@ -3,46 +3,64 @@ import { ZipPassThrough, Zip } from "fflate";
 /**
  * Reads a File or Blob as an ArrayBuffer.
  *
- * @param {File | Blob} file - The File or Blob to be read.
- * @returns {Promise<Uint8Array>} A promise that resolves with the file contents as a Uint8Array.
- * @throws {Error} If there's an error reading the file.
+ * @param file - The File or Blob to be read.
+ * @returns A promise that resolves with the file contents as a Uint8Array.
+ * @throws If there's an error reading the file.
  */
-function readFileAsArrayBuffer(file) {
+function readFileAsArrayBuffer(file: File | Blob): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = (event) => resolve(new Uint8Array(event.target.result));
+    reader.onload = (event) =>
+      resolve(new Uint8Array((event.target as any).result));
     reader.onerror = (error) => reject(error);
     reader.readAsArrayBuffer(file);
   });
 }
 
+type ProgressCallback = (
+  processedFiles: number,
+  totalFiles: number,
+  compressedSize: number,
+  totalSize: number,
+) => void;
+type ErrorCallback = (fileName: string, error: Error) => void;
+type FileError = {
+  file: string;
+  error: string;
+};
+type ZipFilesAsyncReturn = {
+  zipBuffer: Uint8Array;
+  errors: FileError[];
+};
+
 /**
  * Asynchronously compresses an array of files into a ZIP archive using a streaming approach.
  *
- * @param {File[]} files - An array of File objects to be compressed.
- * @param {(processedFiles: number, totalFiles: number, compressedSize: number, totalSize: number) => void} [progressCallback] - Optional callback for progress updates.
+ * @param files - An array of File objects to be compressed.
+ * @param [progressCallback] - Optional callback for progress updates.
  *        Called with the number of processed files, total number of files, current compressed size, and total uncompressed size.
- * @param {(fileName: string, error: Error) => void} [errorCallback] - Optional callback for individual file errors.
+ * @param [errorCallback] - Optional callback for individual file errors.
  *        Called with the name of the file that encountered an error and the error object.
- * @param {boolean} [abortOnError=false] - If true, the entire process will abort on the first error encountered.
+ * @param [abortOnError=false] - If true, the entire process will abort on the first error encountered.
  *        If false, it will continue processing other files after an error.
- * @returns {Promise<{zipBuffer: Uint8Array, errors: Array<{file: string, error: string}>}>} A promise that resolves with an object containing:
+ * @returns A promise that resolves with an object containing:
  *          - zipBuffer: The compressed ZIP file as a Uint8Array.
  *          - errors: An array of objects describing any errors encountered, each containing the file name and error message.
- * @throws {Error} If abortOnError is true and an error is encountered, or if there's an error in the ZIP stream itself.
- */ export function zipFilesAsync(
-  files,
-  progressCallback = null,
-  errorCallback = null,
-  abortOnError = false,
-) {
+ * @throws If abortOnError is true and an error is encountered, or if there's an error in the ZIP stream itself.
+ */
+export function zipFilesAsync(
+  files: File[],
+  progressCallback: ProgressCallback | null = null,
+  errorCallback: ErrorCallback | null = null,
+  abortOnError: boolean = false,
+): Promise<ZipFilesAsyncReturn> {
   return new Promise((resolve, reject) => {
     const totalFiles = files.length;
     let processedFiles = 0;
     let totalSize = 0;
     let compressedSize = 0;
-    let zipChunks = [];
-    let errors = [];
+    let zipChunks: Uint8Array[] = [];
+    let errors: FileError[] = [];
 
     const zipStream = new Zip((err, data, final) => {
       if (err) {
@@ -70,7 +88,7 @@ function readFileAsArrayBuffer(file) {
       }
     });
 
-    function processNextFile(index) {
+    function processNextFile(index: number) {
       if (index >= files.length) {
         zipStream.end();
         return;
