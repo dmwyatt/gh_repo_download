@@ -1,13 +1,8 @@
 import { TreeNode } from "./tree/TreeNode";
 
-export function getFileSystemIcon(
-  node: TreeNode<any>,
-  size: number = 24,
-): SVGSVGElement {
+export function getFileSystemIcon(node: TreeNode<any>): SVGSVGElement {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", "0 0 24 24");
-  svg.setAttribute("width", `${size}px`);
-  svg.setAttribute("height", `${size}px`);
   svg.classList.add("icon");
   const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
   if (node.data.type === "folder") {

@@ -1,5 +1,11 @@
 import { TreeNode } from "./TreeNode";
-import { SelectionState, SelectionValidator } from "./treeTypes";
+
+type SelectionState = boolean | "indeterminate";
+type SelectionValidator<T> = (
+  currentSelection: TreeNode<T>[],
+  node: TreeNode<T>,
+  isSelecting: boolean,
+) => boolean;
 
 export class TreeStateManager<T> {
   state: {

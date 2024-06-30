@@ -3,7 +3,7 @@ import { RenderOptions } from "./treeTypes";
 
 export function defaultGetNodeTemplate(
   node: TreeNode<any>,
-  options: RenderOptions<any>,
+  options: RenderOptions,
 ): string {
   const isFolder = node.data.type === "folder";
   return `
