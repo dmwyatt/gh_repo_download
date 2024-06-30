@@ -1,5 +1,6 @@
 import { FileSystemHelper } from "./FileSystemHelper";
 import { getFileSystemIcon } from "./fileSystemHelpers";
+import { defaultGetNodeTemplate, defaultGetChevron } from "./tree/defaults";
 import { TreeRenderer } from "./tree/TreeRenderer";
 import { Tree } from "./tree/Tree";
 export class FolderTreeHelper {
@@ -133,10 +134,24 @@ export class FolderTreeHelper {
     this.container.innerHTML = "";
     this.container.appendChild(this.loadingElement);
     const tree = new Tree([rootNode]);
-    this.renderer = new TreeRenderer(tree, this.container, {
-      selectionValidator: this.selectionValidator,
-      getIcon: getFileSystemIcon,
-    });
+    this.renderer = new TreeRenderer(
+      tree,
+      this.container,
+      {
+        getNodeTemplate: defaultGetNodeTemplate,
+        getIcon: (node) => getFileSystemIcon(node, 24),
+        getChevron: defaultGetChevron,
+      },
+      {
+        onSelect: (selectedItems) => {
+          console.log("Selected items:", selectedItems);
+        },
+        onToggle: (node, isOpen) => {
+          console.log("Toggled node:", node, "Is open:", isOpen);
+        },
+      },
+      this.selectionValidator,
+    );
     this.renderer.render();
     return tree;
   }

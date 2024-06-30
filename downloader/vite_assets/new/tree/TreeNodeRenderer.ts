@@ -5,7 +5,7 @@ import {
   defaultGetChevron,
   defaultGetNodeTemplate,
 } from "./defaults";
-import { RenderOptions, SelectionChangeInfo } from "./treeTypes";
+import { RenderOptions } from "./treeTypes";
 
 export class TreeNodeRenderer<T> {
   node: TreeNode<T>;
@@ -41,14 +41,14 @@ export class TreeNodeRenderer<T> {
     this.setupEventListeners();
     return nodeElement;
   }
-
   updateCheckboxState(): void {
     const state = this.stateManager.state.selectedItems.get(this.node);
     if (this.node.checkbox) {
-      this.setCheckboxState(this.node.checkbox, state);
+      this.node.checkbox.checked = state === true;
+      this.node.checkbox.indeterminate = state === "indeterminate";
     }
 
-    if (this.node.children.length > 0) {
+    if (this.node.children) {
       this.node.children.forEach((child) => {
         if (child.element) {
           new TreeNodeRenderer(
@@ -61,46 +61,27 @@ export class TreeNodeRenderer<T> {
     }
   }
 
-  private setCheckboxState(
-    checkbox: HTMLInputElement,
-    state: boolean | "indeterminate" | undefined,
-  ): void {
-    if (state === "indeterminate") {
-      checkbox.indeterminate = true;
-      checkbox.checked = false;
-    } else {
-      checkbox.indeterminate = false;
-      checkbox.checked = state === true;
-    }
-  }
-
   setupEventListeners(): void {
     const checkbox = this.node.element?.querySelector(
       ".checkbox",
-    ) as HTMLInputElement | null;
+    ) as HTMLInputElement;
     if (checkbox) {
-      const state = this.stateManager.state.selectedItems.get(this.node);
-      this.setCheckboxState(checkbox, state);
-
+      checkbox.checked =
+        this.stateManager.state.selectedItems.get(this.node) || false;
       checkbox.addEventListener("change", (e) => {
         e.stopPropagation();
-        const newState = this.stateManager.toggleSelection(this.node);
-        const changeInfo: SelectionChangeInfo<T> = {
-          node: this.node,
-          newState: newState,
-          source: "user",
-        };
-        this.options.onSelect(changeInfo);
+        const selectedItems = this.stateManager.toggleSelection(this.node);
+        this.options.onSelect(selectedItems);
         this.updateCheckboxState();
       });
       this.node.checkbox = checkbox;
     }
 
     const chevron = this.node.element?.querySelector(".chevron");
-    if (chevron && this.node.children.length > 0) {
+    if (chevron && this.node.data.type === "folder") {
       chevron.addEventListener("click", (e) => {
         e.stopPropagation();
-        this.toggleChildren();
+        this.toggleFolder();
       });
     }
 
@@ -108,14 +89,14 @@ export class TreeNodeRenderer<T> {
     if (label) {
       label.addEventListener("click", (e) => {
         e.stopPropagation();
-        if (this.node.children.length > 0) {
-          this.toggleChildren();
+        if (this.node.data.type === "folder") {
+          this.toggleFolder();
         }
       });
     }
   }
 
-  toggleChildren(): void {
+  toggleFolder(): void {
     const nodeElement = this.node.element;
     if (!nodeElement) return;
 
