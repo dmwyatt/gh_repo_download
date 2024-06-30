@@ -1,104 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Folder Tree Demo</title>
-  <script type="module" src="tree.js"></script>
-  <script type="module" src="folderTreeHelper.js"></script>
-  <style>
-      #select-folder-btn {
-          margin-bottom: 20px;
-      }
-
-      .folder-tree-loading {
-          display: none;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 20px;
-      }
-
-      .spinner {
-          border: 4px solid #f3f3f3;
-          border-top: 4px solid #3498db;
-          border-radius: 50%;
-          width: 40px;
-          height: 40px;
-          animation: spin 1s linear infinite;
-      }
-
-      @keyframes spin {
-          0% {
-              transform: rotate(0deg);
-          }
-          100% {
-              transform: rotate(360deg);
-          }
-      }
-  </style>
-  <style>
-      .folder-tree-loading {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          padding: 20px;
-      }
-
-      .spinner {
-          border: 4px solid #f3f3f3;
-          border-top: 4px solid #3498db;
-          border-radius: 50%;
-          width: 40px;
-          height: 40px;
-          animation: spin 1s linear infinite;
-      }
-
-      @keyframes spin {
-          0% {
-              transform: rotate(0deg);
-          }
-          100% {
-              transform: rotate(360deg);
-          }
-      }
-
-      .progress-container {
-          width: 100%;
-          max-width: 300px;
-          background-color: #f0f0f0;
-          border-radius: 4px;
-          overflow: hidden;
-          margin-top: 10px;
-      }
-
-      .progress-bar {
-          width: 0;
-          height: 20px;
-          background-color: #4CAF50;
-      }
-
-      .loading-message {
-          margin-top: 10px;
-          text-align: center;
-      }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Folder Tree Demo</title>
+    <script type="module" src="tree.js"></script>
+    <script type="module" src="FolderTreeHelper.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        button {
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 16px;
+        }
+        #tree-container {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+        #output {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .folder-tree-loading {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
-<button id="select-folder-btn">Select Folder</button>
-<div id="tree-container"></div>
-<script type="module">
-  import { FolderTreeHelper } from './folderTreeHelper.js';
+    <h1>Folder Tree Demo</h1>
+    <button id="select-folder-btn">Select Folder</button>
+    <button id="show-selected-btn" disabled>Show Selected Items</button>
+    <button id="read-files-btn" disabled>Read Selected Files</button>
+    <button id="upload-files-btn" disabled>Simulate Upload</button>
+    <div id="tree-container"></div>
+    <div id="output"></div>
 
-  document.addEventListener("DOMContentLoaded", function () {
-    const selectFolderBtn = document.getElementById('select-folder-btn');
-    const container = document.getElementById('tree-container');
-    const folderTreeHelper = new FolderTreeHelper(container);
+    <script type="module">
+        import { FolderTreeHelper } from './FolderTreeHelper.js';
 
-    selectFolderBtn.addEventListener('click', async () => {
-      await folderTreeHelper.selectFolder();
-    });
-  });
-</script>
+        const selectFolderBtn = document.getElementById('select-folder-btn');
+        const showSelectedBtn = document.getElementById('show-selected-btn');
+        const readFilesBtn = document.getElementById('read-files-btn');
+        const uploadFilesBtn = document.getElementById('upload-files-btn');
+        const container = document.getElementById('tree-container');
+        const output = document.getElementById('output');
+        let folderTreeHelper;
+
+        function enableButtons() {
+            showSelectedBtn.disabled = false;
+            readFilesBtn.disabled = false;
+            uploadFilesBtn.disabled = false;
+        }
+
+        selectFolderBtn.addEventListener('click', async () => {
+            folderTreeHelper = new FolderTreeHelper(container);
+            await folderTreeHelper.selectFolder();
+            enableButtons();
+        });
+
+        showSelectedBtn.addEventListener('click', () => {
+            const selectedItems = folderTreeHelper.getSelectedItems();
+            debugger;
+            output.textContent = JSON.stringify(selectedItems, null, 2);
+        });
+
+        readFilesBtn.addEventListener('click', async () => {
+            const fileContents = await folderTreeHelper.readSelectedFiles();
+            output.textContent = JSON.stringify(fileContents, null, 2);
+        });
+
+        uploadFilesBtn.addEventListener('click', () => {
+            const filesToUpload = folderTreeHelper.getSelectedFilesForUpload();
+            output.textContent = `Selected ${filesToUpload.length} file(s) for upload:\n`;
+            filesToUpload.forEach(file => {
+                output.textContent += `${file.name}\n`;
+            });
+            output.textContent += "\nNote: This is a simulation. No actual upload occurs.";
+        });
+    </script>
 </body>
 </html>

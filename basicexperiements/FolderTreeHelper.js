@@ -6,9 +6,9 @@ export class FolderTreeHelper {
     this.container = container;
     this.loadingElement = this.createLoadingElement();
     this.container.appendChild(this.loadingElement);
-    this.processingCount = 0;
     this.totalFiles = 0;
     this.processedFiles = 0;
+    this.fileMap = new Map();
   }
 
   createLoadingElement() {
@@ -91,12 +91,22 @@ export class FolderTreeHelper {
     }
   }
   async buildTreeFromDirectoryHandle(directoryHandle, parentNode = null) {
-    const node = new TreeNode({ name: directoryHandle.name, type: "folder" });
+    const node = new TreeNode({
+      name: directoryHandle.name,
+      type: "folder",
+      handle: directoryHandle,
+    });
     if (parentNode) parentNode.addChild(node);
 
     for await (const entry of directoryHandle.values()) {
       if (entry.kind === "file") {
-        const fileNode = new TreeNode({ name: entry.name, type: "file" });
+        const file = await entry.getFile();
+        const fileNode = new TreeNode({
+          name: entry.name,
+          type: "file",
+          handle: entry,
+        });
+        this.fileMap.set(fileNode, file);
         node.addChild(fileNode);
       } else if (entry.kind === "directory") {
         await this.buildTreeFromDirectoryHandle(entry, node);
@@ -105,7 +115,8 @@ export class FolderTreeHelper {
 
     return node;
   }
-  fallbackToFileInput() {
+
+  async fallbackToFileInput() {
     return new Promise((resolve) => {
       const fileInput = document.createElement("input");
       fileInput.type = "file";
@@ -143,7 +154,7 @@ export class FolderTreeHelper {
     const pathMap = new Map();
     pathMap.set(rootNode.data.name, rootNode);
 
-    this.processedFiles = 0; // Reset processed files count
+    this.processedFiles = 0;
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -170,26 +181,91 @@ export class FolderTreeHelper {
           });
           currentNode.addChild(newNode);
           pathMap.set(path, newNode);
+
+          if (j === pathParts.length - 1) {
+            this.fileMap.set(newNode, file);
+          }
         }
 
         currentNode = pathMap.get(path);
       }
     }
-    this.updateProgress(this.totalFiles, this.totalFiles); // Ensure we reach 100%
+    this.updateProgress(this.totalFiles, this.totalFiles);
     console.log("Finished building tree from files");
+  }
+
+  renderTree(rootNode) {
+    console.log("Rendering tree");
+    this.container.innerHTML = "";
+    this.container.appendChild(this.loadingElement);
+    const tree = new Tree([rootNode]);
+    this.renderer = new TreeRenderer(tree, this.container, {
+      onSelect: (selectedItems) => {
+        console.log("Selected items:", selectedItems);
+      },
+    });
+    this.renderer.render();
+    return tree;
+  }
+
+  getSelectedItems() {
+    if (this.renderer && this.renderer.stateManager) {
+      const selectedNodes = Array.from(
+        this.renderer.stateManager.state.selectedItems.entries(),
+      )
+        .filter(([node, isSelected]) => isSelected === true)
+        .map(([node]) => node);
+
+      return selectedNodes.map((node) => ({
+        name: node.data.name,
+        type: node.data.type,
+        path: this.getNodePath(node),
+        handle: node.data.handle || null,
+        file: this.fileMap.get(node) || null,
+      }));
+    }
+    return [];
+  }
+
+  getNodePath(node) {
+    const path = [];
+    let currentNode = node;
+    while (currentNode) {
+      path.unshift(currentNode.data.name);
+      currentNode = currentNode.parent;
+    }
+    return path.join("/");
+  }
+
+  async readSelectedFiles() {
+    const selectedItems = this.getSelectedItems();
+    const fileContents = [];
+
+    for (const item of selectedItems) {
+      if (item.type === "file") {
+        if (item.handle) {
+          const file = await item.handle.getFile();
+          const content = await file.text();
+          fileContents.push({ name: item.name, path: item.path, content });
+        } else if (item.file) {
+          const content = await item.file.text();
+          fileContents.push({ name: item.name, path: item.path, content });
+        }
+      }
+    }
+
+    return fileContents;
   }
 
   async yieldToMain() {
     return new Promise((resolve) => setTimeout(resolve, 0));
   }
 
-  renderTree(rootNode) {
-    console.log("Rendering tree");
-    this.container.innerHTML = ""; // Clear previous tree
-    this.container.appendChild(this.loadingElement); // Re-add loading element
-    const tree = new Tree([rootNode]);
-    const renderer = new TreeRenderer(tree, this.container);
-    renderer.render();
-    return tree;
+  getSelectedFilesForUpload() {
+    const selectedItems = this.getSelectedItems();
+    return selectedItems
+      .filter((item) => item.type === "file")
+      .map((item) => item.file || item.handle)
+      .filter(Boolean);
   }
 }

@@ -1,5 +1,3 @@
-import EventManager from "./EventManager.js";
-
 export class TreeNode {
   constructor(data) {
     this.data = data;
