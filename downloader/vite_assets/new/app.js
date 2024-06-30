@@ -1,7 +1,7 @@
 import Alpine from "alpinejs";
 
 import { FolderTreeHelper, isFile, getFileFromItem } from "./FolderTreeHelper";
-import { zipFilesAsync } from "./utils";
+import { zipFilesAsync, getCookie } from "./utils";
 
 function app() {
   return {
@@ -10,7 +10,7 @@ function app() {
     folderTreeHelper: null,
     selectedCount: 0,
     selectedSize: 0,
-    maxFiles: 3,
+    maxFiles: 200,
     maxSizeMB: 500,
 
     init() {
@@ -114,7 +114,7 @@ function app() {
           // Optionally, display these errors to the user
         }
 
-        await this.submitZipFile(zipBuffer);
+        this.submitZipFile(zipBuffer);
       } catch (error) {
         console.error("Error in confirmAndUploadFiles:", error);
         alert(
@@ -160,19 +160,44 @@ function app() {
       alert(`Error processing file: ${fileName}`);
     },
 
-    async submitZipFile(zipBuffer) {
-      const form = document.getElementById("file-upload-form");
-      const fileInput = document.getElementById("zip-file-input");
-
+    submitZipFile(zipBuffer) {
       const blob = new Blob([zipBuffer], { type: "application/zip" });
       const file = new File([blob], "selected_files.zip", {
         type: "application/zip",
       });
 
+      const form = document.createElement("form");
+      const fileInput = document.createElement("input");
+
+      // Set up form
+      form.action = "/";
+      form.method = "post";
+      form.enctype = "multipart/form-data";
+
+      form.classList.add("hidden");
+
+      // Set up file input
+      fileInput.type = "file";
+      fileInput.name = "zip_file";
+
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(file);
       fileInput.files = dataTransfer.files;
+      form.appendChild(fileInput);
 
+      // Get CSRF token from cookies
+      const csrftoken = getCookie("csrftoken");
+
+      // Create and add CSRF token input to form
+      const csrfInput = document.createElement("input");
+      csrfInput.type = "hidden";
+      csrfInput.name = "csrfmiddlewaretoken";
+      csrfInput.value = csrftoken;
+      form.appendChild(csrfInput);
+
+      document.body.appendChild(form);
+
+      // Submit form
       form.submit();
     },
 
