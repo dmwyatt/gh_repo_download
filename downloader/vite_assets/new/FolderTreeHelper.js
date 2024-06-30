@@ -1,4 +1,5 @@
 import { FileSystemHelper } from "./FileSystemHelper";
+import { getFileSystemIcon } from "./fileSystemHelpers";
 import { TreeRenderer } from "./tree/TreeRenderer";
 import { Tree } from "./tree/Tree";
 export class FolderTreeHelper {
@@ -134,6 +135,7 @@ export class FolderTreeHelper {
     const tree = new Tree([rootNode]);
     this.renderer = new TreeRenderer(tree, this.container, {
       selectionValidator: this.selectionValidator,
+      getIcon: getFileSystemIcon,
     });
     this.renderer.render();
     return tree;
