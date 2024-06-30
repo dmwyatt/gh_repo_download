@@ -1,62 +1,69 @@
-export class TreeStateManager {
-  constructor(selectionValidator = () => true) {
+import { TreeNode } from "./TreeNode";
+
+type SelectionState = boolean | "indeterminate";
+type SelectionValidator<T> = (
+  currentSelection: TreeNode<T>[],
+  node: TreeNode<T>,
+  isSelecting: boolean,
+) => boolean;
+
+export class TreeStateManager<T> {
+  state: {
+    selectedItems: Map<TreeNode<T>, SelectionState>;
+  };
+  selectionValidator: SelectionValidator<T>;
+
+  constructor(selectionValidator: SelectionValidator<T> = () => true) {
     this.state = {
-      selectedItems: new Map(), // Node -> boolean or 'indeterminate'
+      selectedItems: new Map(),
     };
     this.selectionValidator = selectionValidator;
   }
 
-  toggleSelection(node) {
+  toggleSelection(node: TreeNode<T>): SelectionState {
     const currentState = this.state.selectedItems.get(node) || false;
     const newState = !currentState;
 
-    // Check if the new selection state is valid
     if (this.selectionValidator(this.getSelectedNodes(), node, newState)) {
       this.updateSelection(node, newState);
-      this.emitSelectionChangedEvent();
-      return true; // Selection was successful
+      return newState;
     } else {
-      this.emitSelectionInvalidEvent(node, newState);
-      return false; // Selection was prevented
+      return currentState;
     }
   }
-
-  updateSelection(node, isSelected) {
-    // Update the current node
+  updateSelection(node: TreeNode<T>, isSelected: boolean): void {
     this.state.selectedItems.set(node, isSelected);
 
-    // Update child nodes recursively
     node.children.forEach((child) => {
       this.updateSelection(child, isSelected);
     });
 
-    // Update parent node recursively
     if (node.parent) {
       this.updateParentSelection(node.parent);
     }
   }
 
-  getSelectedNodes() {
+  getSelectedNodes(): TreeNode<T>[] {
     return Array.from(this.state.selectedItems.entries())
-      .filter(([node, isSelected]) => isSelected === true)
+      .filter(([, isSelected]) => isSelected === true)
       .map(([node]) => node);
   }
 
-  emitSelectionChangedEvent() {
+  emitSelectionChangedEvent(): void {
     const event = new CustomEvent("selectionChanged", {
       detail: { selectedNodes: this.getSelectedNodes() },
     });
     document.dispatchEvent(event);
   }
 
-  emitSelectionInvalidEvent(node, attemptedState) {
+  emitSelectionInvalidEvent(node: TreeNode<T>, attemptedState: boolean): void {
     const event = new CustomEvent("selectionInvalid", {
       detail: { node, attemptedState },
     });
     document.dispatchEvent(event);
   }
 
-  updateParentSelection(node) {
+  updateParentSelection(node: TreeNode<T>): void {
     const allSelected = node.children.every(
       (child) => this.state.selectedItems.get(child) === true,
     );
@@ -64,7 +71,7 @@ export class TreeStateManager {
       this.state.selectedItems.get(child),
     );
 
-    let newState;
+    let newState: SelectionState;
     if (allSelected) {
       newState = true;
     } else if (anySelected) {
@@ -85,9 +92,9 @@ export class TreeStateManager {
     }
   }
 
-  getSelectedItems() {
+  getSelectedItems(): string[] {
     return Array.from(this.state.selectedItems.entries())
-      .filter(([node, isSelected]) => isSelected === true)
-      .map(([node]) => node.data.name);
+      .filter(([, isSelected]) => isSelected === true)
+      .map(([node]) => node.name);
   }
 }
