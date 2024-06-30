@@ -10,12 +10,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "alpinejs": "^3.14.1",
     "fflate": "^0.8.2",
     "ignore": "^5.3.1",
     "tiktoken": "^1.0.13",
     "vite": "^5.1.6"
   },
   "devDependencies": {
+    "typescript": "^5.5.2",
     "vite-plugin-top-level-await": "^1.4.1",
     "vite-plugin-wasm": "^3.3.0"
   }
