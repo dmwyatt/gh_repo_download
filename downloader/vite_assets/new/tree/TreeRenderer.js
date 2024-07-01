@@ -2,16 +2,12 @@ import { TreeNodeRenderer } from "./TreeNodeRenderer";
 import { TreeStateManager } from "./TreeStateManager";
 
 export class TreeRenderer {
-  constructor(tree, containerElement, options = {}) {
+  constructor(tree, containerElement, treeConfig) {
     this.tree = tree;
     this.containerElement = containerElement;
-    this.options = {
-      onToggle: () => {},
-      onSelect: () => {},
-      selectionValidator: () => true,
-      ...options,
-    };
-    this.stateManager = new TreeStateManager(this.options.selectionValidator);
+    this.renderFunctions = treeConfig.renderFunctions;
+    this.eventHandlers = treeConfig.eventHandlers;
+    this.stateManager = new TreeStateManager(treeConfig.selectionValidator);
     this.injectCSS();
   }
 
@@ -59,12 +55,12 @@ export class TreeRenderer {
       await this.renderNode(node, this.containerElement, true);
     }
   }
-
   async renderNode(node, parentElement, isInitialRender = false) {
     const nodeRenderer = new TreeNodeRenderer(
       node,
       this.stateManager,
-      this.options,
+      this.renderFunctions,
+      this.eventHandlers,
     );
     const nodeElement = nodeRenderer.render();
     parentElement.appendChild(nodeElement);

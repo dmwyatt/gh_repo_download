@@ -1,7 +1,9 @@
 import { FileSystemHelper } from "./FileSystemHelper";
 import { getFileSystemIcon } from "./fileSystemHelpers";
+import { defaultGetNodeTemplate, defaultGetChevron } from "./tree/defaults";
 import { TreeRenderer } from "./tree/TreeRenderer";
 import { Tree } from "./tree/Tree";
+
 export class FolderTreeHelper {
   constructor(container, selectionValidator = () => true) {
     this.container = container;
@@ -12,6 +14,22 @@ export class FolderTreeHelper {
     this.fileMap = new Map();
     this.selectionValidator = selectionValidator;
     this.fileSystemHelper = new FileSystemHelper();
+
+    this.treeConfig = {
+      renderFunctions: {
+        getNodeTemplate: getFileSystemNodeTemplate,
+        getIcon: getFileSystemIcon,
+        getChevron: defaultGetChevron,
+      },
+      eventHandlers: {
+        onSelect: (selectedItems) => {
+          console.log("Selected items:", selectedItems);
+        },
+        onToggle: (node, isOpen) => {
+          console.log("Node toggled:", node, "Is open:", isOpen);
+        },
+      },
+    };
   }
 
   createLoadingElement() {
@@ -128,15 +146,13 @@ export class FolderTreeHelper {
       fileInput.click();
     });
   }
+
   renderTree(rootNode) {
     console.log("Rendering tree");
     this.container.innerHTML = "";
     this.container.appendChild(this.loadingElement);
     const tree = new Tree([rootNode]);
-    this.renderer = new TreeRenderer(tree, this.container, {
-      selectionValidator: this.selectionValidator,
-      getIcon: getFileSystemIcon,
-    });
+    this.renderer = new TreeRenderer(tree, this.container, this.treeConfig);
     this.renderer.render();
     return tree;
   }
@@ -245,4 +261,19 @@ export async function getFileFromItem(item) {
     return item.handle.getFile();
   }
   return null;
+}
+
+export function getFileSystemNodeTemplate(node, renderFunctions) {
+  const isFolder = node.data.type === "folder";
+  return `
+    <div class="tree-node ${isFolder ? "folder" : "file"}">
+      <div class="node-content">
+        <input type="checkbox" class="checkbox">
+        ${isFolder ? renderFunctions.getChevron(node).outerHTML : ""}
+        ${renderFunctions.getIcon(node).outerHTML}
+        <span class="node-label">${node.name}</span>
+      </div>
+      ${isFolder ? '<div class="children-container" style="display: none;"></div>' : ""}
+    </div>
+  `;
 }

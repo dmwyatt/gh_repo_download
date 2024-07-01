@@ -1,38 +1,33 @@
 import { TreeNode } from "./TreeNode";
 import { TreeStateManager } from "./TreeStateManager";
 import {
-  defaultGetIcon,
-  defaultGetChevron,
-  defaultGetNodeTemplate,
-} from "./defaults";
-import { RenderOptions, SelectionChangeInfo } from "./treeTypes";
+  TreeRenderFunctions,
+  TreeEventHandlers,
+  SelectionChangeInfo,
+} from "./treeTypes";
 
 export class TreeNodeRenderer<T> {
   node: TreeNode<T>;
   stateManager: TreeStateManager<T>;
-  options: RenderOptions<T>;
+  renderFunctions: TreeRenderFunctions<T>;
+  eventHandlers: TreeEventHandlers<T>;
 
   constructor(
     node: TreeNode<T>,
     stateManager: TreeStateManager<T>,
-    options: Partial<RenderOptions<T>> = {},
+    renderFunctions: TreeRenderFunctions<T>,
+    eventHandlers: TreeEventHandlers<T>,
   ) {
     this.node = node;
     this.stateManager = stateManager;
-    this.options = {
-      getNodeTemplate: defaultGetNodeTemplate,
-      getIcon: defaultGetIcon,
-      getChevron: defaultGetChevron,
-      onSelect: () => {},
-      onToggle: () => {},
-      ...options,
-    };
+    this.renderFunctions = renderFunctions;
+    this.eventHandlers = eventHandlers;
   }
 
   render(): HTMLElement {
     const template = document.createElement("template");
-    template.innerHTML = this.options
-      .getNodeTemplate(this.node, this.options)
+    template.innerHTML = this.renderFunctions
+      .getNodeTemplate(this.node, this.renderFunctions)
       .trim();
     const nodeElement = template.content.firstChild as HTMLElement;
     this.node.element = nodeElement;
@@ -54,7 +49,8 @@ export class TreeNodeRenderer<T> {
           new TreeNodeRenderer(
             child,
             this.stateManager,
-            this.options,
+            this.renderFunctions,
+            this.eventHandlers,
           ).updateCheckboxState();
         }
       });
@@ -90,7 +86,7 @@ export class TreeNodeRenderer<T> {
           newState: newState,
           source: "user",
         };
-        this.options.onSelect(changeInfo);
+        this.eventHandlers.onSelect(changeInfo);
         this.updateCheckboxState();
       });
       this.node.checkbox = checkbox;
@@ -132,7 +128,8 @@ export class TreeNodeRenderer<T> {
         const childRenderer = new TreeNodeRenderer(
           child,
           this.stateManager,
-          this.options,
+          this.renderFunctions,
+          this.eventHandlers,
         );
         fragment.appendChild(childRenderer.render());
       });
@@ -141,6 +138,6 @@ export class TreeNodeRenderer<T> {
 
     childrenContainer.style.display = isOpen ? "none" : "block";
     nodeElement.classList.toggle("open", !isOpen);
-    this.options.onToggle(this.node, !isOpen);
+    this.eventHandlers.onToggle(this.node, !isOpen);
   }
 }

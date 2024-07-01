@@ -6,10 +6,21 @@ export type SelectionChangeInfo<T> = {
   source: "user" | "programmatic";
 };
 
-export type RenderOptions<T> = {
-  getNodeTemplate: (node: TreeNode<any>, options: RenderOptions<T>) => string;
-  getIcon: (node: TreeNode<any>) => SVGSVGElement;
-  getChevron: (node: TreeNode<any>) => SVGSVGElement;
+export interface TreeRenderFunctions<T> {
+  getNodeTemplate: (
+    node: TreeNode<T>,
+    renderFunctions: TreeRenderFunctions<T>,
+  ) => string;
+  getIcon: (node: TreeNode<T>) => SVGSVGElement;
+  getChevron: (node: TreeNode<T>) => SVGSVGElement;
+}
+
+export interface TreeEventHandlers<T> {
   onSelect: (selectedItems: SelectionChangeInfo<T>) => void;
-  onToggle: (node: TreeNode<any>, isOpen: boolean) => void;
-};
+  onToggle: (node: TreeNode<T>, isOpen: boolean) => void;
+}
+
+export interface TreeConfig<T> {
+  renderFunctions: TreeRenderFunctions<T>;
+  eventHandlers: TreeEventHandlers<T>;
+}

@@ -1,20 +1,19 @@
 import { TreeNode } from "./TreeNode";
-import { RenderOptions } from "./treeTypes";
+import { TreeRenderFunctions } from "./treeTypes";
 
-export function defaultGetNodeTemplate(
-  node: TreeNode<any>,
-  options: RenderOptions,
+export function defaultGetNodeTemplate<T>(
+  node: TreeNode<T>,
+  renderFunctions: TreeRenderFunctions<T>,
 ): string {
-  const isFolder = node.data.type === "folder";
   return `
-    <div class="tree-node ${isFolder ? "folder" : "file"}">
+    <div class="tree-node">
       <div class="node-content">
         <input type="checkbox" class="checkbox">
-        ${isFolder ? options.getChevron(node).outerHTML : ""}
-        ${options.getIcon(node).outerHTML}
+        ${node.children.length > 0 ? renderFunctions.getChevron(node).outerHTML : ""}
+        ${renderFunctions.getIcon(node).outerHTML}
         <span class="node-label">${node.name}</span>
       </div>
-      ${isFolder ? '<div class="children-container" style="display: none;"></div>' : ""}
+      ${node.children.length > 0 ? '<div class="children-container" style="display: none;"></div>' : ""}
     </div>
   `;
 }
