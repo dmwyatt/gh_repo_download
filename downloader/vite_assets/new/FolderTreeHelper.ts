@@ -269,7 +269,7 @@ export class FolderTreeHelper {
       )
       .map(this.getFileFromSelectedItem.bind(this));
 
-    return (await Promise.all(filePromises)).filter(this.isValidFile);
+    return (await Promise.all(filePromises)).filter(isValidFile);
   }
 
   private async getFileFromSelectedItem(
@@ -295,10 +295,6 @@ export class FolderTreeHelper {
       console.error(`Error getting file for ${item.name}:`, error);
       return null;
     }
-  }
-
-  private isValidFile(file: File | null): file is File {
-    return file !== null;
   }
 
   getFileCount(node: TreeNode<FileSystemNodeData>): number {
@@ -356,4 +352,8 @@ export function getFileSystemNodeTemplate(
       ${isFolder ? '<div class="children-container" style="display: none;"></div>' : ""}
     </div>
   `;
+}
+
+function isValidFile(file: File | null): file is File {
+  return file !== null;
 }
