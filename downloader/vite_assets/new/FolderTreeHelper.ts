@@ -267,30 +267,38 @@ export class FolderTreeHelper {
       .filter(
         (item): item is SelectedItem & { type: "file" } => item.type === "file",
       )
-      .map(async (item) => {
-        if (item.file instanceof File) {
-          return item.file;
-        } else if (item.handle) {
-          if (isFileSystemFileHandle(item.handle)) {
-            try {
-              return await item.handle.getFile();
-            } catch (error) {
-              console.error(`Error getting file for ${item.name}:`, error);
-              return null;
-            }
-          } else {
-            console.error(`Handle for ${item.name} is not a file handle`);
-            return null;
-          }
-        } else {
-          console.error(`No file or handle available for ${item.name}`);
-          return null;
-        }
-      });
+      .map(this.getFileFromSelectedItem.bind(this));
 
-    return (await Promise.all(filePromises)).filter(
-      (file): file is File => file !== null,
-    );
+    return (await Promise.all(filePromises)).filter(this.isValidFile);
+  }
+
+  private async getFileFromSelectedItem(
+    item: SelectedItem & { type: "file" },
+  ): Promise<File | null> {
+    if (item.file instanceof File) {
+      return item.file;
+    }
+
+    if (!item.handle) {
+      console.error(`No file or handle available for ${item.name}`);
+      return null;
+    }
+
+    if (!isFileSystemFileHandle(item.handle)) {
+      console.error(`Handle for ${item.name} is not a file handle`);
+      return null;
+    }
+
+    try {
+      return await item.handle.getFile();
+    } catch (error) {
+      console.error(`Error getting file for ${item.name}:`, error);
+      return null;
+    }
+  }
+
+  private isValidFile(file: File | null): file is File {
+    return file !== null;
   }
 
   getFileCount(node: TreeNode<FileSystemNodeData>): number {
