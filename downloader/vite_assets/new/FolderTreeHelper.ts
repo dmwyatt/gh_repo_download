@@ -15,8 +15,6 @@ type SelectionValidator<T> = (
 export class FolderTreeHelper {
   private container: HTMLElement;
   private loadingElement: HTMLElement;
-  private totalFiles: number;
-  private processedFiles: number;
   private fileMap: Map<TreeNode<any>, File>;
   private fileSystemHelper: FileSystemHelper;
   private treeConfig: TreeConfig<any>;
@@ -29,8 +27,6 @@ export class FolderTreeHelper {
     this.container = container;
     this.loadingElement = this.createLoadingElement();
     this.container.appendChild(this.loadingElement);
-    this.totalFiles = 0;
-    this.processedFiles = 0;
     this.fileMap = new Map();
     this.fileSystemHelper = new FileSystemHelper();
 
