@@ -26,8 +26,10 @@ export class TreeStateManager<T> {
 
     if (this.selectionValidator(this.getSelectedNodes(), node, newState)) {
       this.updateSelection(node, newState);
+      this.emitSelectionChangedEvent();
       return newState;
     } else {
+      this.emitSelectionInvalidEvent(node, newState);
       return currentState;
     }
   }
