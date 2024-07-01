@@ -4,7 +4,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "lib": ["DOM", "DOM.Iterable", "ESNext", "DOM.AsyncIterable"],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
