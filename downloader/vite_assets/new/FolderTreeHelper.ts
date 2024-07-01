@@ -1,11 +1,31 @@
-import { FileSystemHelper } from "./FileSystemHelper";
 import { getFileSystemIcon } from "./fileSystemHelpers";
-import { defaultGetNodeTemplate, defaultGetChevron } from "./tree/defaults";
+import { defaultGetChevron } from "./tree/defaults";
 import { TreeRenderer } from "./tree/TreeRenderer";
 import { Tree } from "./tree/Tree";
+import { TreeNode } from "./tree/TreeNode";
+import { TreeConfig, TreeRenderFunctions } from "./tree/treeTypes";
+import { FileSystemHelper } from "./FileSystemHelper";
+
+type SelectionValidator<T> = (
+  currentSelection: TreeNode<T>[],
+  node: TreeNode<T>,
+  isSelecting: boolean,
+) => boolean;
 
 export class FolderTreeHelper {
-  constructor(container, selectionValidator = () => true) {
+  private container: HTMLElement;
+  private loadingElement: HTMLElement;
+  private totalFiles: number;
+  private processedFiles: number;
+  private fileMap: Map<TreeNode<any>, File>;
+  private fileSystemHelper: FileSystemHelper;
+  private treeConfig: TreeConfig<any>;
+  private renderer?: TreeRenderer<any>;
+
+  constructor(
+    container: HTMLElement,
+    selectionValidator: SelectionValidator<any> = () => true,
+  ) {
     this.container = container;
     this.loadingElement = this.createLoadingElement();
     this.container.appendChild(this.loadingElement);
@@ -19,7 +39,8 @@ export class FolderTreeHelper {
         getNodeTemplate: getFileSystemNodeTemplate,
         getIcon: getFileSystemIcon,
         getChevron: defaultGetChevron,
-        shouldInitiallyHideChildren: (node) => node.data.type === "folder",
+        shouldInitiallyHideChildren: (node: TreeNode<any>) =>
+          node.data.type === "folder",
       },
       eventHandlers: {
         onSelect: (selectedItems) => {
@@ -33,7 +54,7 @@ export class FolderTreeHelper {
     };
   }
 
-  createLoadingElement() {
+  private createLoadingElement(): HTMLElement {
     const loading = document.createElement("div");
     loading.className = "folder-tree-loading";
     loading.style.display = "none";
@@ -47,23 +68,24 @@ export class FolderTreeHelper {
     return loading;
   }
 
-  showLoading(message, useSpinner = true) {
+  showLoading(message: string, useSpinner: boolean = true): void {
     console.log(`Showing loading indicator: ${message}`);
     this.loadingElement.style.display = "flex";
     this.updateLoadingMessage(message);
-    this.loadingElement.querySelector(".spinner").style.display = useSpinner
-      ? "block"
-      : "none";
-    this.loadingElement.querySelector(".progress-container").style.display =
-      useSpinner ? "none" : "block";
+    (
+      this.loadingElement.querySelector(".spinner") as HTMLElement
+    ).style.display = useSpinner ? "block" : "none";
+    (
+      this.loadingElement.querySelector(".progress-container") as HTMLElement
+    ).style.display = useSpinner ? "none" : "block";
   }
 
-  hideLoading() {
+  hideLoading(): void {
     console.log("Hiding loading indicator");
     this.loadingElement.style.display = "none";
   }
 
-  updateLoadingMessage(message) {
+  updateLoadingMessage(message: string): void {
     const messageElement =
       this.loadingElement.querySelector(".loading-message");
     if (messageElement) {
@@ -71,9 +93,11 @@ export class FolderTreeHelper {
     }
   }
 
-  updateProgress(progress, total) {
+  updateProgress(progress: number, total: number): void {
     const percentage = total > 0 ? (progress / total) * 100 : 0;
-    const progressBar = this.loadingElement.querySelector(".progress-bar");
+    const progressBar = this.loadingElement.querySelector(
+      ".progress-bar",
+    ) as HTMLElement;
     if (progressBar) {
       progressBar.style.width = `${percentage}%`;
     }
@@ -82,14 +106,14 @@ export class FolderTreeHelper {
     );
   }
 
-  async selectFolder() {
+  async selectFolder(): Promise<Tree<any> | null> {
     console.log("selectFolder started");
     this.showLoading("Selecting folder...", true);
-    let rootNode;
+    let rootNode: TreeNode<any>;
     if ("showDirectoryPicker" in window) {
       try {
         console.log("Using showDirectoryPicker");
-        const directoryHandle = await window.showDirectoryPicker();
+        const directoryHandle = await (window as any).showDirectoryPicker();
         console.log("Directory selected, processing files");
         this.showLoading("Processing files...", true);
         rootNode =
@@ -117,30 +141,32 @@ export class FolderTreeHelper {
     }
   }
 
-  async fallbackToFileInput() {
+  private async fallbackToFileInput(): Promise<TreeNode<any>> {
     return new Promise((resolve) => {
       const fileInput = document.createElement("input");
       fileInput.type = "file";
-      fileInput.webkitdirectory = true;
-      fileInput.directory = true;
+      (fileInput as any).webkitdirectory = true;
+      (fileInput as any).directory = true;
       fileInput.multiple = true;
 
-      fileInput.onchange = async (event) => {
+      fileInput.onchange = async (event: Event) => {
         console.log("Files selected via input");
-        const files = event.target.files;
-        if (files.length === 0) {
+        const files = (event.target as HTMLInputElement).files;
+        if (files && files.length === 0) {
           console.log("No files selected");
           this.hideLoading();
-          resolve(null);
+          resolve(null as any);
           return;
         }
 
-        console.log(`${files.length} files selected`);
-        this.showLoading(`Processing 0 / ${files.length} files...`, false);
-        const rootNode = await this.fileSystemHelper.buildTreeFromFiles(
-          Array.from(files),
-        );
-        resolve(rootNode);
+        if (files) {
+          console.log(`${files.length} files selected`);
+          this.showLoading(`Processing 0 / ${files.length} files...`, false);
+          const rootNode = await this.fileSystemHelper.buildTreeFromFiles(
+            Array.from(files),
+          );
+          resolve(rootNode);
+        }
       };
 
       console.log("Opening file input dialog");
@@ -148,7 +174,7 @@ export class FolderTreeHelper {
     });
   }
 
-  renderTree(rootNode) {
+  renderTree(rootNode: TreeNode<any>): Tree<any> {
     console.log("Rendering tree");
     this.container.innerHTML = "";
     this.container.appendChild(this.loadingElement);
@@ -158,7 +184,13 @@ export class FolderTreeHelper {
     return tree;
   }
 
-  getSelectedItems() {
+  getSelectedItems(): Array<{
+    name: string;
+    type: string;
+    path: string;
+    handle: FileSystemFileHandle | null;
+    file: File | null;
+  }> {
     if (this.renderer && this.renderer.stateManager) {
       const selectedNodes = Array.from(
         this.renderer.stateManager.state.selectedItems.entries(),
@@ -177,9 +209,9 @@ export class FolderTreeHelper {
     return [];
   }
 
-  getNodePath(node) {
-    const path = [];
-    let currentNode = node;
+  private getNodePath(node: TreeNode<any>): string {
+    const path: string[] = [];
+    let currentNode: TreeNode<any> | null = node;
     while (currentNode) {
       path.unshift(currentNode.data.name);
       currentNode = currentNode.parent;
@@ -187,9 +219,12 @@ export class FolderTreeHelper {
     return path.join("/");
   }
 
-  async readSelectedFiles() {
+  async readSelectedFiles(): Promise<
+    Array<{ name: string; path: string; content: string }>
+  > {
     const selectedItems = this.getSelectedItems();
-    const fileContents = [];
+    const fileContents: Array<{ name: string; path: string; content: string }> =
+      [];
 
     for (const item of selectedItems) {
       if (item.type === "file") {
@@ -207,11 +242,11 @@ export class FolderTreeHelper {
     return fileContents;
   }
 
-  async yieldToMain() {
+  private async yieldToMain(): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, 0));
   }
 
-  async getSelectedFilesForUpload() {
+  async getSelectedFilesForUpload(): Promise<File[]> {
     const selectedItems = this.getSelectedItems();
     const filePromises = selectedItems
       .filter((item) => item.type === "file")
@@ -231,40 +266,50 @@ export class FolderTreeHelper {
         }
       });
 
-    return (await Promise.all(filePromises)).filter(Boolean);
+    return (await Promise.all(filePromises)).filter(
+      (file): file is File => file !== null,
+    );
   }
 
-  getFileCount(node) {
+  getFileCount(node: TreeNode<any>): number {
     return this.fileSystemHelper.getFileCount(node);
   }
 
-  getTotalSize(node) {
+  getTotalSize(node: TreeNode<any>): number {
     return this.fileSystemHelper.getTotalSize(node);
   }
 }
 
-export function isFile(item) {
+export function isFile(item: { type: string }): boolean {
   return item.type === "file";
 }
 
-export function isFileSystemFileHandle(item) {
-  return item.handle && item.handle.kind === "file";
+export function isFileSystemFileHandle(item: {
+  handle?: { kind: string };
+}): boolean {
+  return !!item.handle && item.handle.kind === "file";
 }
-
-export function isRegularFile(item) {
+export function isRegularFile(item: { type: string; file?: File }): boolean {
   return isFile(item) && item.file instanceof File;
 }
 
-export async function getFileFromItem(item) {
+export async function getFileFromItem(item: {
+  type: string;
+  file?: File;
+  handle?: FileSystemFileHandle;
+}): Promise<File | null> {
   if (isRegularFile(item)) {
-    return item.file;
+    return item.file!;
   } else if (isFileSystemFileHandle(item)) {
-    return item.handle.getFile();
+    return item.handle!.getFile();
   }
   return null;
 }
 
-export function getFileSystemNodeTemplate(node, renderFunctions) {
+export function getFileSystemNodeTemplate(
+  node: TreeNode<any>,
+  renderFunctions: TreeRenderFunctions<any>,
+): string {
   const isFolder = node.data.type === "folder";
   return `
     <div class="tree-node ${isFolder ? "folder" : "file"}">
