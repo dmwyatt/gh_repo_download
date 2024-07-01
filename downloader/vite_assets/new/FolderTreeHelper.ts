@@ -13,11 +13,11 @@ type SelectionValidator<T> = (
 ) => boolean;
 
 export class FolderTreeHelper {
-  private container: HTMLElement;
-  private loadingElement: HTMLElement;
+  private readonly container: HTMLElement;
+  private readonly loadingElement: HTMLElement;
   private fileMap: Map<TreeNode<any>, File>;
   private fileSystemHelper: FileSystemHelper;
-  private treeConfig: TreeConfig<any>;
+  private readonly treeConfig: TreeConfig<any>;
   private renderer?: TreeRenderer<any>;
 
   constructor(
