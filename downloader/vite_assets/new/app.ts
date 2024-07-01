@@ -36,24 +36,27 @@ function app() {
         node: TreeNode<any>,
         isSelecting: boolean,
       ) => {
-        let newCount = this.selectedCount;
-        let newSize = this.selectedSize;
-
         const nodeFileCount = this.folderTreeHelper!.getFileCount(node);
         const nodeSize = this.folderTreeHelper!.getTotalSize(node);
 
-        if (isSelecting) {
-          newCount += nodeFileCount;
-          newSize += nodeSize;
-        } else {
-          newCount -= nodeFileCount;
-          newSize -= nodeSize;
-        }
+        let countAdjustment = isSelecting ? nodeFileCount : -nodeFileCount;
+        let sizeAdjustment = isSelecting ? nodeSize : -nodeSize;
 
-        console.info({ newCount, newSize, nodeFileCount, nodeSize });
+        let projectedCount = this.selectedCount + countAdjustment;
+        let projectedSize = this.selectedSize + sizeAdjustment;
+
+        console.info({
+          projectedCount,
+          projectedSize,
+          countAdjustment,
+          sizeAdjustment,
+          nodeFileCount,
+          nodeSize,
+        });
 
         return (
-          newCount <= this.maxFiles && newSize <= this.maxSizeMB * 1024 * 1024
+          projectedCount <= this.maxFiles &&
+          projectedSize <= this.maxSizeMB * 1024 * 1024
         );
       };
 
