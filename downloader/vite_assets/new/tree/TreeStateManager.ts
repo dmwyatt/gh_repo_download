@@ -1,7 +1,7 @@
 import { TreeNode } from "./TreeNode";
 
 type SelectionState = boolean | "indeterminate";
-type SelectionValidator<T> = (
+export type SelectionValidator<T> = (
   currentSelection: TreeNode<T>[],
   node: TreeNode<T>,
   isSelecting: boolean,
@@ -33,6 +33,7 @@ export class TreeStateManager<T> {
       return currentState;
     }
   }
+
   updateSelection(node: TreeNode<T>, isSelected: boolean): void {
     this.state.selectedItems.set(node, isSelected);
 
