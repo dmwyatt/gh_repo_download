@@ -2,7 +2,7 @@ import Alpine from "alpinejs";
 
 import { FolderTreeHelper, isFile, getFileFromItem } from "./FolderTreeHelper";
 import { zipFilesAsync, getCookie } from "./utils";
-import { TreeNode } from "./tree/TreeNode";
+import { FileSystemNodeData, TreeNode } from "./tree/TreeNode";
 
 type FileItem = {
   type: string;
@@ -11,11 +11,11 @@ type FileItem = {
 };
 
 type SelectionChangeEventDetail = {
-  selectedNodes: TreeNode<any>[];
+  selectedNodes: TreeNode<FileSystemNodeData>[];
 };
 
 type SelectionInvalidEventDetail = {
-  node: TreeNode<any>;
+  node: TreeNode<FileSystemNodeData>;
   attemptedState: boolean;
 };
 
@@ -32,8 +32,8 @@ function app() {
 
     init() {
       const selectionValidator = (
-        currentSelection: TreeNode<any>[],
-        node: TreeNode<any>,
+        currentSelection: TreeNode<FileSystemNodeData>[],
+        node: TreeNode<FileSystemNodeData>,
         isSelecting: boolean,
       ) => {
         const nodeFileCount = this.folderTreeHelper!.getFileCount(node);
