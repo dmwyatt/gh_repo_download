@@ -29,7 +29,7 @@ export class FolderTreeHelper {
     selectionValidator: SelectionValidator<FileSystemNodeData> = () => true,
   ) {
     this.container = container;
-    this.loadingElement = this.createLoadingElement();
+    this.loadingElement = createLoadingElement();
     this.container.appendChild(this.loadingElement);
     this.fileMap = new Map();
     this.fileSystemHelper = new FileSystemHelper();
@@ -52,20 +52,6 @@ export class FolderTreeHelper {
       },
       selectionValidator: selectionValidator,
     };
-  }
-
-  private createLoadingElement(): HTMLElement {
-    const loading = document.createElement("div");
-    loading.className = "folder-tree-loading";
-    loading.style.display = "none";
-    loading.innerHTML = `
-      <div class="spinner"></div>
-      <div class="progress-container" style="display: none;">
-        <div class="progress-bar"></div>
-      </div>
-      <p class="loading-message">Selecting folder...</p>
-    `;
-    return loading;
   }
 
   showLoading(message: string, useSpinner: boolean = true): void {
@@ -113,7 +99,7 @@ export class FolderTreeHelper {
     if ("showDirectoryPicker" in window) {
       try {
         console.log("Using showDirectoryPicker");
-        const directoryHandle = await (window as any).showDirectoryPicker();
+        const directoryHandle = await window.showDirectoryPicker();
         console.log("Directory selected, processing files");
         this.showLoading("Processing files...", true);
         rootNode =
@@ -210,23 +196,13 @@ export class FolderTreeHelper {
         return {
           name: node.name,
           type: node.data.type,
-          path: this.getNodePath(node),
+          path: getNodePath(node),
           handle: fileSystemHandle,
           file: this.fileMap.get(node) || null,
         };
       });
     }
     return [];
-  }
-
-  private getNodePath(node: TreeNode<any>): string {
-    const path: string[] = [];
-    let currentNode: TreeNode<any> | null = node;
-    while (currentNode) {
-      path.unshift(currentNode.data.name);
-      currentNode = currentNode.parent;
-    }
-    return path.join("/");
   }
 
   async readSelectedFiles(): Promise<
@@ -267,34 +243,9 @@ export class FolderTreeHelper {
       .filter(
         (item): item is SelectedItem & { type: "file" } => item.type === "file",
       )
-      .map(this.getFileFromSelectedItem.bind(this));
+      .map(getFileFromSelectedItem);
 
     return (await Promise.all(filePromises)).filter(isValidFile);
-  }
-
-  private async getFileFromSelectedItem(
-    item: SelectedItem & { type: "file" },
-  ): Promise<File | null> {
-    if (item.file instanceof File) {
-      return item.file;
-    }
-
-    if (!item.handle) {
-      console.error(`No file or handle available for ${item.name}`);
-      return null;
-    }
-
-    if (!isFileSystemFileHandle(item.handle)) {
-      console.error(`Handle for ${item.name} is not a file handle`);
-      return null;
-    }
-
-    try {
-      return await item.handle.getFile();
-    } catch (error) {
-      console.error(`Error getting file for ${item.name}:`, error);
-      return null;
-    }
   }
 
   getFileCount(node: TreeNode<FileSystemNodeData>): number {
@@ -314,26 +265,6 @@ export function isFileSystemFileHandle(
   handle: FileSystemHandle,
 ): handle is FileSystemFileHandle {
   return handle.kind === "file";
-}
-
-export function isRegularFile(item: { type: string; file?: File }): boolean {
-  return isFile(item) && item.file instanceof File;
-}
-
-export async function getFileFromItem(
-  item: SelectedItem,
-): Promise<File | null> {
-  if (item.file instanceof File) {
-    return item.file;
-  } else if (item.handle && isFileSystemFileHandle(item.handle)) {
-    try {
-      return await item.handle.getFile();
-    } catch (error) {
-      console.error(`Error getting file for ${item.name}:`, error);
-      return null;
-    }
-  }
-  return null;
 }
 
 export function getFileSystemNodeTemplate(
@@ -356,4 +287,53 @@ export function getFileSystemNodeTemplate(
 
 function isValidFile(file: File | null): file is File {
   return file !== null;
+}
+
+function createLoadingElement(): HTMLElement {
+  const loading = document.createElement("div");
+  loading.className = "folder-tree-loading";
+  loading.style.display = "none";
+  loading.innerHTML = `
+      <div class="spinner"></div>
+      <div class="progress-container" style="display: none;">
+        <div class="progress-bar"></div>
+      </div>
+      <p class="loading-message">Selecting folder...</p>
+    `;
+  return loading;
+}
+
+function getNodePath(node: TreeNode<any>): string {
+  const path: string[] = [];
+  let currentNode: TreeNode<any> | null = node;
+  while (currentNode) {
+    path.unshift(currentNode.data.name);
+    currentNode = currentNode.parent;
+  }
+  return path.join("/");
+}
+
+async function getFileFromSelectedItem(
+  item: SelectedItem & { type: "file" },
+): Promise<File | null> {
+  if (item.file instanceof File) {
+    return item.file;
+  }
+
+  if (!item.handle) {
+    console.error(`No file or handle available for ${item.name}`);
+    return null;
+  }
+
+  if (!isFileSystemFileHandle(item.handle)) {
+    console.error(`Handle for ${item.name} is not a file handle`);
+    return null;
+  }
+
+  try {
+    return await item.handle.getFile();
+  } catch (error) {
+    console.error(`Error getting file for ${item.name}:`, error);
+    return null;
+  }
 }

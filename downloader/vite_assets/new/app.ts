@@ -1,6 +1,6 @@
 import Alpine from "alpinejs";
 
-import { FolderTreeHelper, isFile, getFileFromItem } from "./FolderTreeHelper";
+import { FolderTreeHelper } from "./FolderTreeHelper";
 import { zipFilesAsync, getCookie } from "./utils";
 import { FileSystemNodeData, TreeNode } from "./tree/TreeNode";
 
