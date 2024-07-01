@@ -12,7 +12,6 @@ export class FolderTreeHelper {
     this.totalFiles = 0;
     this.processedFiles = 0;
     this.fileMap = new Map();
-    this.selectionValidator = selectionValidator;
     this.fileSystemHelper = new FileSystemHelper();
 
     this.treeConfig = {
@@ -20,6 +19,7 @@ export class FolderTreeHelper {
         getNodeTemplate: getFileSystemNodeTemplate,
         getIcon: getFileSystemIcon,
         getChevron: defaultGetChevron,
+        shouldInitiallyHideChildren: (node) => node.data.type === "folder",
       },
       eventHandlers: {
         onSelect: (selectedItems) => {
@@ -29,6 +29,7 @@ export class FolderTreeHelper {
           console.log("Node toggled:", node, "Is open:", isOpen);
         },
       },
+      selectionValidator: selectionValidator,
     };
   }
 

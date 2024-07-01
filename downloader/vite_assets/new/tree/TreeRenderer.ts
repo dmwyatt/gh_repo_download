@@ -1,17 +1,34 @@
+import { Tree } from "./Tree";
+import { TreeNode } from "./TreeNode";
 import { TreeNodeRenderer } from "./TreeNodeRenderer";
 import { TreeStateManager } from "./TreeStateManager";
+import {
+  TreeRenderFunctions,
+  TreeEventHandlers,
+  TreeConfig,
+} from "./treeTypes";
 
-export class TreeRenderer {
-  constructor(tree, containerElement, treeConfig) {
+export class TreeRenderer<T> {
+  tree: Tree<T>;
+  containerElement: HTMLElement;
+  renderFunctions: TreeRenderFunctions<T>;
+  eventHandlers: TreeEventHandlers<T>;
+  stateManager: TreeStateManager<T>;
+
+  constructor(
+    tree: Tree<T>,
+    containerElement: HTMLElement,
+    treeConfig: TreeConfig<T>,
+  ) {
     this.tree = tree;
     this.containerElement = containerElement;
     this.renderFunctions = treeConfig.renderFunctions;
     this.eventHandlers = treeConfig.eventHandlers;
-    this.stateManager = new TreeStateManager(treeConfig.selectionValidator);
+    this.stateManager = new TreeStateManager<T>(treeConfig.selectionValidator);
     this.injectCSS();
   }
 
-  injectCSS() {
+  private injectCSS(): void {
     const styleId = "tree-renderer-styles";
     if (!document.getElementById(styleId)) {
       const style = document.createElement("style");
@@ -49,14 +66,19 @@ export class TreeRenderer {
     }
   }
 
-  async render() {
+  async render(): Promise<void> {
     this.containerElement.innerHTML = "";
     for (const node of this.tree.nodes) {
       await this.renderNode(node, this.containerElement, true);
     }
   }
-  async renderNode(node, parentElement, isInitialRender = false) {
-    const nodeRenderer = new TreeNodeRenderer(
+
+  private async renderNode(
+    node: TreeNode<T>,
+    parentElement: HTMLElement,
+    isInitialRender: boolean = false,
+  ): Promise<void> {
+    const nodeRenderer = new TreeNodeRenderer<T>(
       node,
       this.stateManager,
       this.renderFunctions,
@@ -65,8 +87,11 @@ export class TreeRenderer {
     const nodeElement = nodeRenderer.render();
     parentElement.appendChild(nodeElement);
 
-    if (node.data.type === "folder" && isInitialRender) {
-      const childrenContainer = nodeElement.querySelector(
+    if (
+      isInitialRender &&
+      this.renderFunctions.shouldInitiallyHideChildren(node)
+    ) {
+      const childrenContainer = nodeElement.querySelector<HTMLElement>(
         ".children-container",
       );
       if (childrenContainer) {

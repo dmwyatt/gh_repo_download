@@ -13,6 +13,7 @@ export interface TreeRenderFunctions<T> {
   ) => string;
   getIcon: (node: TreeNode<T>) => SVGSVGElement;
   getChevron: (node: TreeNode<T>) => SVGSVGElement;
+  shouldInitiallyHideChildren: (node: TreeNode<T>) => boolean;
 }
 
 export interface TreeEventHandlers<T> {
@@ -23,4 +24,9 @@ export interface TreeEventHandlers<T> {
 export interface TreeConfig<T> {
   renderFunctions: TreeRenderFunctions<T>;
   eventHandlers: TreeEventHandlers<T>;
+  selectionValidator?: (
+    currentSelection: TreeNode<T>[],
+    node: TreeNode<T>,
+    isSelecting: boolean,
+  ) => boolean;
 }
