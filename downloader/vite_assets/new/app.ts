@@ -2,24 +2,45 @@ import Alpine from "alpinejs";
 
 import { FolderTreeHelper, isFile, getFileFromItem } from "./FolderTreeHelper";
 import { zipFilesAsync, getCookie } from "./utils";
+import { TreeNode } from "./tree/TreeNode";
+
+type FileItem = {
+  type: string;
+  file?: File;
+  handle?: FileSystemFileHandle;
+};
+
+type SelectionChangeEventDetail = {
+  selectedNodes: TreeNode<any>[];
+};
+
+type SelectionInvalidEventDetail = {
+  node: TreeNode<any>;
+  attemptedState: boolean;
+};
 
 function app() {
   return {
     githubUrl: "",
-    selectedItems: [],
-    folderTreeHelper: null,
+    selectedItems: [] as FileItem[],
+    folderTreeHelper: null as FolderTreeHelper | null,
     selectedCount: 0,
     selectedSize: 0,
     maxFiles: 200,
     maxSizeMB: 500,
+    isProcessing: false,
 
     init() {
-      const selectionValidator = (currentSelection, node, isSelecting) => {
+      const selectionValidator = (
+        currentSelection: TreeNode<any>[],
+        node: TreeNode<any>,
+        isSelecting: boolean,
+      ) => {
         let newCount = this.selectedCount;
         let newSize = this.selectedSize;
 
-        const nodeFileCount = this.folderTreeHelper.getFileCount(node);
-        const nodeSize = this.folderTreeHelper.getTotalSize(node);
+        const nodeFileCount = this.folderTreeHelper!.getFileCount(node);
+        const nodeSize = this.folderTreeHelper!.getTotalSize(node);
 
         if (isSelecting) {
           newCount += nodeFileCount;
@@ -37,19 +58,20 @@ function app() {
       };
 
       this.folderTreeHelper = new FolderTreeHelper(
-        document.getElementById("tree-container"),
+        document.getElementById("tree-container")!,
         selectionValidator,
       );
 
-      document.addEventListener("selectionChanged", (event) => {
-        console.log("selection change", event);
-        const selectedNodes = event.detail.selectedNodes;
+      document.addEventListener("selectionChanged", (event: Event) => {
+        const { selectedNodes } = (
+          event as CustomEvent<SelectionChangeEventDetail>
+        ).detail;
         this.selectedCount = selectedNodes.reduce(
-          (count, node) => count + this.folderTreeHelper.getFileCount(node),
+          (count, node) => count + this.folderTreeHelper!.getFileCount(node),
           0,
         );
         this.selectedSize = selectedNodes.reduce(
-          (size, node) => size + this.folderTreeHelper.getTotalSize(node),
+          (size, node) => size + this.folderTreeHelper!.getTotalSize(node),
           0,
         );
         console.log("selected count", this.selectedCount);
@@ -57,13 +79,14 @@ function app() {
         this.updateSelectionDisplay();
       });
 
-      document.addEventListener("selectionInvalid", (event) => {
-        console.log("Invalid selection", event);
-        const { node, attemptedState } = event.detail;
+      document.addEventListener("selectionInvalid", (event: Event) => {
+        const { node, attemptedState } = (
+          event as CustomEvent<SelectionInvalidEventDetail>
+        ).detail;
         const action = attemptedState ? "select" : "deselect";
         const nodeType = node.data.type === "folder" ? "folder" : "file";
         const reason =
-          this.folderTreeHelper.getFileCount(node) > this.maxFiles
+          this.folderTreeHelper!.getFileCount(node) > this.maxFiles
             ? `exceed the limit of ${this.maxFiles} files`
             : `exceed the limit of ${this.maxSizeMB} MB`;
 
@@ -76,7 +99,7 @@ function app() {
       // This could update a progress bar, change colors, etc.
     },
 
-    showSelectionInvalidWarning(node, attemptedState) {
+    showSelectionInvalidWarning(node: TreeNode<any>, attemptedState: boolean) {
       const action = attemptedState ? "select" : "deselect";
       alert(
         `Cannot ${action} "${node.data.name}". It would exceed the file count or size limit.`,
@@ -84,8 +107,10 @@ function app() {
     },
 
     async selectFolder() {
-      document.getElementById("folder-dialog").showModal();
-      const tree = await this.folderTreeHelper.selectFolder();
+      (
+        document.getElementById("folder-dialog") as HTMLDialogElement
+      ).showModal();
+      const tree = await this.folderTreeHelper!.selectFolder();
       if (tree) {
         console.log("Folder selected and tree rendered");
       }
@@ -97,7 +122,7 @@ function app() {
 
       try {
         const selectedFiles =
-          await this.folderTreeHelper.getSelectedFilesForUpload();
+          await this.folderTreeHelper!.getSelectedFilesForUpload();
 
         if (selectedFiles.length === 0) {
           throw new Error("No valid files selected for upload");
@@ -118,7 +143,7 @@ function app() {
       } catch (error) {
         console.error("Error in confirmAndUploadFiles:", error);
         alert(
-          error.message ||
+          (error as Error).message ||
             "An error occurred during the upload process. Please try again.",
         );
       } finally {
@@ -128,39 +153,60 @@ function app() {
     },
 
     showLoadingState() {
-      document.getElementById("loading-spinner").classList.remove("hidden");
-      document.getElementById("page-overlay").classList.remove("hidden");
+      document.getElementById("loading-spinner")!.classList.remove("hidden");
+      document.getElementById("page-overlay")!.classList.remove("hidden");
       document
         .querySelectorAll("button, input")
-        .forEach((el) => (el.disabled = true));
+        .forEach(
+          (el) =>
+            ((el as HTMLButtonElement | HTMLInputElement).disabled = true),
+        );
     },
 
     hideLoadingState() {
-      document.getElementById("loading-spinner").classList.add("hidden");
-      document.getElementById("page-overlay").classList.add("hidden");
+      document.getElementById("loading-spinner")!.classList.add("hidden");
+      document.getElementById("page-overlay")!.classList.add("hidden");
       document
         .querySelectorAll("button, input")
-        .forEach((el) => (el.disabled = false));
+        .forEach(
+          (el) =>
+            ((el as HTMLButtonElement | HTMLInputElement).disabled = false),
+        );
     },
 
-    updateProgressBar(processedFiles, totalFiles, compressedSize, totalSize) {
+    updateProgressBar(
+      processedFiles: number,
+      totalFiles: number,
+      compressedSize: number,
+      totalSize: number,
+    ) {
       const percentage = (processedFiles / totalFiles) * 100;
-      const progressBar = document.getElementById("progress-bar");
-      const progressText = document.getElementById("progress-text");
-      const progressContainer = document.getElementById("progress-container");
+      const progressBar = document.getElementById(
+        "progress-bar",
+      ) as HTMLElement;
+      const progressText = document.getElementById(
+        "progress-text",
+      ) as HTMLElement;
+      const progressContainer = document.getElementById(
+        "progress-container",
+      ) as HTMLElement;
 
       progressBar.style.width = `${percentage}%`;
-      progressText.textContent = `Processed ${processedFiles} of ${totalFiles} files (${(compressedSize / 1024 / 1024).toFixed(2)} MB / ${(totalSize / 1024 / 1024).toFixed(2)} MB)`;
+      progressText.textContent = `Processed ${processedFiles} of ${totalFiles} files (${(
+        compressedSize /
+        1024 /
+        1024
+      ).toFixed(2)} MB / ${(totalSize / 1024 / 1024).toFixed(2)} MB)`;
       progressContainer.classList.remove("hidden");
     },
 
-    handleZipError(fileName, error) {
+    handleZipError(fileName: string, error: Error) {
       console.error(`Error zipping file ${fileName}:`, error);
       // Optionally, display this error to the user
       alert(`Error processing file: ${fileName}`);
     },
 
-    submitZipFile(zipBuffer) {
+    submitZipFile(zipBuffer: Uint8Array) {
       const blob = new Blob([zipBuffer], { type: "application/zip" });
       const file = new File([blob], "selected_files.zip", {
         type: "application/zip",
@@ -192,7 +238,7 @@ function app() {
       const csrfInput = document.createElement("input");
       csrfInput.type = "hidden";
       csrfInput.name = "csrfmiddlewaretoken";
-      csrfInput.value = csrftoken;
+      csrfInput.value = csrftoken!;
       form.appendChild(csrfInput);
 
       document.body.appendChild(form);
@@ -202,49 +248,8 @@ function app() {
     },
 
     closeDialog() {
-      document.getElementById("folder-dialog").close();
-      document.getElementById("tree-container").innerHTML = "";
-    },
-
-    async submitFileUploadForm() {
-      const form = document.getElementById("file-upload-form");
-
-      // Clear any existing file inputs
-      form
-        .querySelectorAll('input[type="file"]')
-        .forEach((input) => input.remove());
-
-      const filePromises = this.selectedItems.map(async (item) => {
-        if (isFile(item)) {
-          const file = await getFileFromItem(item);
-          if (file) {
-            // Create a new File object with the relative path as the name
-            return new File([file], item.path, { type: file.type });
-          }
-        }
-        return null;
-      });
-
-      const files = (await Promise.all(filePromises)).filter(
-        (file) => file !== null,
-      );
-
-      // Now that we have all File objects, we can add them to the form
-      files.forEach((file) => {
-        const fileInput = document.createElement("input");
-        fileInput.type = "file";
-        fileInput.name = "files[]";
-        fileInput.style.display = "none";
-
-        const dt = new DataTransfer();
-        dt.items.add(file);
-        fileInput.files = dt.files;
-
-        form.appendChild(fileInput);
-      });
-
-      // Submit the form
-      form.submit();
+      (document.getElementById("folder-dialog") as HTMLDialogElement).close();
+      document.getElementById("tree-container")!.innerHTML = "";
     },
   };
 }

@@ -6,10 +6,11 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Text File Consolidator</title>
+        {#  Tailwind v2 is easier to work with for now. Will convert to 3 soon    #}
         <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
               rel="stylesheet">
         {% vite_hmr_client %}
-        {% vite_asset 'downloader/vite_assets/new/app.js' %}
+        {% vite_asset 'downloader/vite_assets/new/app.ts' %}
         <style>
             dialog::backdrop {
                 background-color: rgba(0, 0, 0, 0.5);
