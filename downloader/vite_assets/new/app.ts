@@ -77,8 +77,6 @@ function app() {
           (size, node) => size + this.folderTreeHelper!.getTotalSize(node),
           0,
         );
-        console.log("selected count", this.selectedCount);
-        console.log("selected size", this.selectedSize);
         this.updateSelectionDisplay();
       });
 
