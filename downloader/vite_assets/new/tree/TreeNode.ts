@@ -20,3 +20,9 @@ export class TreeNode<T> {
     this.children.push(childNode);
   }
 }
+
+export type FileSystemNodeData = {
+  type: "file" | "folder";
+  handle?: FileSystemHandle;
+  size: number;
+};
