@@ -2,19 +2,20 @@ import { getFileSystemIcon } from "./fileSystemHelpers";
 import { defaultGetChevron } from "./tree/defaults";
 import { TreeRenderer } from "./tree/TreeRenderer";
 import { Tree } from "./tree/Tree";
-import { TreeNode } from "./tree/TreeNode";
-import { TreeConfig, TreeRenderFunctions } from "./tree/treeTypes";
-import { FileSystemHelper } from "./FileSystemHelper";
 import type { FileSystemNodeData } from "./tree/TreeNode";
+import { TreeNode } from "./tree/TreeNode";
+import { TreeConfig } from "./tree/treeTypes";
+import { FileSystemHelper } from "./FileSystemHelper";
 import type { SelectionValidator } from "./tree/TreeStateManager";
-
-interface SelectedItem {
-  name: string;
-  type: "file" | "folder";
-  path: string;
-  handle: FileSystemFileHandle | FileSystemDirectoryHandle | null;
-  file: File | null;
-}
+import {
+  createLoadingElement,
+  getFileFromSelectedItem,
+  getFileSystemNodeTemplate,
+  getNodePath,
+  isFileSystemFileHandle,
+  isValidFile,
+} from "./folderTreeHelperUtils";
+import { SelectedItem } from "./fileSystemTypes";
 
 export class FolderTreeHelper {
   private readonly container: HTMLElement;
@@ -254,86 +255,5 @@ export class FolderTreeHelper {
 
   getTotalSize(node: TreeNode<FileSystemNodeData>): number {
     return this.fileSystemHelper.getTotalSize(node);
-  }
-}
-
-export function isFile(item: { type: string }): boolean {
-  return item.type === "file";
-}
-
-export function isFileSystemFileHandle(
-  handle: FileSystemHandle,
-): handle is FileSystemFileHandle {
-  return handle.kind === "file";
-}
-
-export function getFileSystemNodeTemplate(
-  node: TreeNode<any>,
-  renderFunctions: TreeRenderFunctions<any>,
-): string {
-  const isFolder = node.data.type === "folder";
-  return `
-    <div class="tree-node ${isFolder ? "folder" : "file"}">
-      <div class="node-content">
-        <input type="checkbox" class="checkbox">
-        ${isFolder ? renderFunctions.getChevron(node).outerHTML : ""}
-        ${renderFunctions.getIcon(node).outerHTML}
-        <span class="node-label">${node.name}</span>
-      </div>
-      ${isFolder ? '<div class="children-container" style="display: none;"></div>' : ""}
-    </div>
-  `;
-}
-
-function isValidFile(file: File | null): file is File {
-  return file !== null;
-}
-
-function createLoadingElement(): HTMLElement {
-  const loading = document.createElement("div");
-  loading.className = "folder-tree-loading";
-  loading.style.display = "none";
-  loading.innerHTML = `
-      <div class="spinner"></div>
-      <div class="progress-container" style="display: none;">
-        <div class="progress-bar"></div>
-      </div>
-      <p class="loading-message">Selecting folder...</p>
-    `;
-  return loading;
-}
-
-function getNodePath(node: TreeNode<any>): string {
-  const path: string[] = [];
-  let currentNode: TreeNode<any> | null = node;
-  while (currentNode) {
-    path.unshift(currentNode.data.name);
-    currentNode = currentNode.parent;
-  }
-  return path.join("/");
-}
-
-async function getFileFromSelectedItem(
-  item: SelectedItem & { type: "file" },
-): Promise<File | null> {
-  if (item.file instanceof File) {
-    return item.file;
-  }
-
-  if (!item.handle) {
-    console.error(`No file or handle available for ${item.name}`);
-    return null;
-  }
-
-  if (!isFileSystemFileHandle(item.handle)) {
-    console.error(`Handle for ${item.name} is not a file handle`);
-    return null;
-  }
-
-  try {
-    return await item.handle.getFile();
-  } catch (error) {
-    console.error(`Error getting file for ${item.name}:`, error);
-    return null;
   }
 }
