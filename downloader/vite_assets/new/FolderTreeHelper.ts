@@ -5,24 +5,28 @@ import { Tree } from "./tree/Tree";
 import { TreeNode } from "./tree/TreeNode";
 import { TreeConfig, TreeRenderFunctions } from "./tree/treeTypes";
 import { FileSystemHelper } from "./FileSystemHelper";
+import type { FileSystemNodeData } from "./tree/TreeNode";
+import type { SelectionValidator } from "./tree/TreeStateManager";
 
-type SelectionValidator<T> = (
-  currentSelection: TreeNode<T>[],
-  node: TreeNode<T>,
-  isSelecting: boolean,
-) => boolean;
+interface SelectedItem {
+  name: string;
+  type: "file" | "folder";
+  path: string;
+  handle: FileSystemFileHandle | FileSystemDirectoryHandle | null;
+  file: File | null;
+}
 
 export class FolderTreeHelper {
   private readonly container: HTMLElement;
   private readonly loadingElement: HTMLElement;
-  private fileMap: Map<TreeNode<any>, File>;
+  private fileMap: Map<TreeNode<FileSystemNodeData>, File>;
   private fileSystemHelper: FileSystemHelper;
-  private readonly treeConfig: TreeConfig<any>;
-  private renderer?: TreeRenderer<any>;
+  private readonly treeConfig: TreeConfig<FileSystemNodeData>;
+  private renderer?: TreeRenderer<FileSystemNodeData>;
 
   constructor(
     container: HTMLElement,
-    selectionValidator: SelectionValidator<any> = () => true,
+    selectionValidator: SelectionValidator<FileSystemNodeData> = () => true,
   ) {
     this.container = container;
     this.loadingElement = this.createLoadingElement();
@@ -180,27 +184,37 @@ export class FolderTreeHelper {
     return tree;
   }
 
-  getSelectedItems(): Array<{
-    name: string;
-    type: string;
-    path: string;
-    handle: FileSystemFileHandle | null;
-    file: File | null;
-  }> {
+  getSelectedItems(): SelectedItem[] {
     if (this.renderer && this.renderer.stateManager) {
       const selectedNodes = Array.from(
         this.renderer.stateManager.state.selectedItems.entries(),
       )
-        .filter(([node, isSelected]) => isSelected === true)
+        .filter(([_, isSelected]) => isSelected === true)
         .map(([node]) => node);
 
-      return selectedNodes.map((node) => ({
-        name: node.data.name,
-        type: node.data.type,
-        path: this.getNodePath(node),
-        handle: node.data.handle || null,
-        file: this.fileMap.get(node) || null,
-      }));
+      return selectedNodes.map((node): SelectedItem => {
+        const handle = node.data.handle;
+        let fileSystemHandle:
+          | FileSystemFileHandle
+          | FileSystemDirectoryHandle
+          | null = null;
+
+        if (handle) {
+          if (handle.kind === "file") {
+            fileSystemHandle = handle as FileSystemFileHandle;
+          } else if (handle.kind === "directory") {
+            fileSystemHandle = handle as FileSystemDirectoryHandle;
+          }
+        }
+
+        return {
+          name: node.name,
+          type: node.data.type,
+          path: this.getNodePath(node),
+          handle: fileSystemHandle,
+          file: this.fileMap.get(node) || null,
+        };
+      });
     }
     return [];
   }
@@ -223,14 +237,19 @@ export class FolderTreeHelper {
       [];
 
     for (const item of selectedItems) {
-      if (item.type === "file") {
-        if (item.handle) {
-          const file = await item.handle.getFile();
-          const content = await file.text();
-          fileContents.push({ name: item.name, path: item.path, content });
-        } else if (item.file) {
-          const content = await item.file.text();
-          fileContents.push({ name: item.name, path: item.path, content });
+      if (item.type === "file" && item.handle) {
+        if (isFileSystemFileHandle(item.handle)) {
+          try {
+            const file = await item.handle.getFile();
+            const content = await file.text();
+            fileContents.push({ name: item.name, path: item.path, content });
+          } catch (error) {
+            console.error(`Error reading file ${item.name}:`, error);
+          }
+        } else {
+          console.warn(
+            `Expected file handle for ${item.name}, but got directory handle`,
+          );
         }
       }
     }
@@ -245,19 +264,26 @@ export class FolderTreeHelper {
   async getSelectedFilesForUpload(): Promise<File[]> {
     const selectedItems = this.getSelectedItems();
     const filePromises = selectedItems
-      .filter((item) => item.type === "file")
+      .filter(
+        (item): item is SelectedItem & { type: "file" } => item.type === "file",
+      )
       .map(async (item) => {
         if (item.file instanceof File) {
           return item.file;
-        } else if (item.handle && typeof item.handle.getFile === "function") {
-          try {
-            return await item.handle.getFile();
-          } catch (error) {
-            console.error(`Error getting file for ${item.name}:`, error);
+        } else if (item.handle) {
+          if (isFileSystemFileHandle(item.handle)) {
+            try {
+              return await item.handle.getFile();
+            } catch (error) {
+              console.error(`Error getting file for ${item.name}:`, error);
+              return null;
+            }
+          } else {
+            console.error(`Handle for ${item.name} is not a file handle`);
             return null;
           }
         } else {
-          console.error(`Unable to get File object for ${item.name}`);
+          console.error(`No file or handle available for ${item.name}`);
           return null;
         }
       });
@@ -267,11 +293,11 @@ export class FolderTreeHelper {
     );
   }
 
-  getFileCount(node: TreeNode<any>): number {
+  getFileCount(node: TreeNode<FileSystemNodeData>): number {
     return this.fileSystemHelper.getFileCount(node);
   }
 
-  getTotalSize(node: TreeNode<any>): number {
+  getTotalSize(node: TreeNode<FileSystemNodeData>): number {
     return this.fileSystemHelper.getTotalSize(node);
   }
 }
@@ -280,24 +306,28 @@ export function isFile(item: { type: string }): boolean {
   return item.type === "file";
 }
 
-export function isFileSystemFileHandle(item: {
-  handle?: { kind: string };
-}): boolean {
-  return !!item.handle && item.handle.kind === "file";
+export function isFileSystemFileHandle(
+  handle: FileSystemHandle,
+): handle is FileSystemFileHandle {
+  return handle.kind === "file";
 }
+
 export function isRegularFile(item: { type: string; file?: File }): boolean {
   return isFile(item) && item.file instanceof File;
 }
 
-export async function getFileFromItem(item: {
-  type: string;
-  file?: File;
-  handle?: FileSystemFileHandle;
-}): Promise<File | null> {
-  if (isRegularFile(item)) {
-    return item.file!;
-  } else if (isFileSystemFileHandle(item)) {
-    return item.handle!.getFile();
+export async function getFileFromItem(
+  item: SelectedItem,
+): Promise<File | null> {
+  if (item.file instanceof File) {
+    return item.file;
+  } else if (item.handle && isFileSystemFileHandle(item.handle)) {
+    try {
+      return await item.handle.getFile();
+    } catch (error) {
+      console.error(`Error getting file for ${item.name}:`, error);
+      return null;
+    }
   }
   return null;
 }
