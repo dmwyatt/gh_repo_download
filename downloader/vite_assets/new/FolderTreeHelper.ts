@@ -8,7 +8,6 @@ import { TreeConfig } from "./tree/treeTypes";
 import { FileSystemHelper } from "./FileSystemHelper";
 import type { SelectionValidator } from "./tree/TreeStateManager";
 import {
-  createLoadingElement,
   getFileFromSelectedItem,
   getFileSystemNodeTemplate,
   getNodePath,
@@ -16,11 +15,10 @@ import {
   isValidFile,
 } from "./folderTreeHelperUtils";
 import { SelectedItem } from "./fileSystemTypes";
+import { loadingManager } from "./loading/LoadingManager";
 
 export class FolderTreeHelper {
-  private readonly container: HTMLElement;
-  private readonly loadingElement: HTMLElement;
-  private fileMap: Map<TreeNode<FileSystemNodeData>, File>;
+  private container: HTMLElement;
   private fileSystemHelper: FileSystemHelper;
   private readonly treeConfig: TreeConfig<FileSystemNodeData>;
   private renderer?: TreeRenderer<FileSystemNodeData>;
@@ -30,9 +28,6 @@ export class FolderTreeHelper {
     selectionValidator: SelectionValidator<FileSystemNodeData> = () => true,
   ) {
     this.container = container;
-    this.loadingElement = createLoadingElement();
-    this.container.appendChild(this.loadingElement);
-    this.fileMap = new Map();
     this.fileSystemHelper = new FileSystemHelper();
 
     this.treeConfig = {
@@ -55,44 +50,6 @@ export class FolderTreeHelper {
     };
   }
 
-  showLoading(message: string, useSpinner: boolean = true): void {
-    console.log(`Showing loading indicator: ${message}`);
-    this.loadingElement.style.display = "flex";
-    this.updateLoadingMessage(message);
-    (
-      this.loadingElement.querySelector(".spinner") as HTMLElement
-    ).style.display = useSpinner ? "block" : "none";
-    (
-      this.loadingElement.querySelector(".progress-container") as HTMLElement
-    ).style.display = useSpinner ? "none" : "block";
-  }
-
-  hideLoading(): void {
-    console.log("Hiding loading indicator");
-    this.loadingElement.style.display = "none";
-  }
-
-  updateLoadingMessage(message: string): void {
-    const messageElement =
-      this.loadingElement.querySelector(".loading-message");
-    if (messageElement) {
-      messageElement.textContent = message;
-    }
-  }
-
-  updateProgress(progress: number, total: number): void {
-    const percentage = total > 0 ? (progress / total) * 100 : 0;
-    const progressBar = this.loadingElement.querySelector(
-      ".progress-bar",
-    ) as HTMLElement;
-    if (progressBar) {
-      progressBar.style.width = `${percentage}%`;
-    }
-    this.updateLoadingMessage(
-      `Processing files... ${progress} / ${total} (${Math.round(percentage)}%)`,
-    );
-  }
-
   async selectFolder(): Promise<Tree<any> | null> {
     console.log("selectFolder started");
     let rootNode: TreeNode<any>;
@@ -100,6 +57,10 @@ export class FolderTreeHelper {
     if ("showDirectoryPicker" in window) {
       try {
         console.log("Using showDirectoryPicker");
+        loadingManager.sendMessage({
+          type: "start",
+          message: "Selecting directory...",
+        });
         const directoryHandle = await window.showDirectoryPicker();
         console.log("Directory selected, processing files");
         rootNode =
@@ -108,6 +69,7 @@ export class FolderTreeHelper {
           );
       } catch (err) {
         console.error("Error selecting directory:", err);
+        loadingManager.sendMessage({ type: "end" });
         return null;
       }
     } else {
@@ -117,8 +79,10 @@ export class FolderTreeHelper {
 
     if (rootNode) {
       console.log("Tree built, rendering");
+      loadingManager.sendMessage({ type: "end" });
       return this.renderTree(rootNode);
     } else {
+      loadingManager.sendMessage({ type: "end" });
       return null;
     }
   }
@@ -136,14 +100,13 @@ export class FolderTreeHelper {
         const files = (event.target as HTMLInputElement).files;
         if (files && files.length === 0) {
           console.log("No files selected");
-          this.hideLoading();
+          loadingManager.sendMessage({ type: "end" });
           resolve(null as any);
           return;
         }
 
         if (files) {
           console.log(`${files.length} files selected`);
-          this.showLoading(`Processing 0 / ${files.length} files...`, false);
           const rootNode = await this.fileSystemHelper.buildTreeFromFiles(
             Array.from(files),
           );
@@ -159,7 +122,6 @@ export class FolderTreeHelper {
   renderTree(rootNode: TreeNode<any>): Tree<any> {
     console.log("Rendering tree");
     this.container.innerHTML = "";
-    this.container.appendChild(this.loadingElement);
     const tree = new Tree([rootNode]);
     this.renderer = new TreeRenderer(tree, this.container, this.treeConfig);
     this.renderer.render();
@@ -194,7 +156,7 @@ export class FolderTreeHelper {
           type: node.data.type,
           path: getNodePath(node),
           handle: fileSystemHandle,
-          file: this.fileMap.get(node) || null,
+          file: this.fileSystemHelper.getFileForNode(node) || null,
         };
       });
     }

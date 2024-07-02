@@ -3,6 +3,7 @@ import Alpine from "alpinejs";
 import { FolderTreeHelper } from "./FolderTreeHelper";
 import { zipFilesAsync, getCookie } from "./utils";
 import { FileSystemNodeData, TreeNode } from "./tree/TreeNode";
+import { loadingManager } from "./loading/LoadingManager";
 
 type FileItem = {
   type: string;
@@ -161,25 +162,11 @@ function app() {
     },
 
     showLoadingState() {
-      document.getElementById("loading-spinner")!.classList.remove("hidden");
-      document.getElementById("page-overlay")!.classList.remove("hidden");
-      document
-        .querySelectorAll("button, input")
-        .forEach(
-          (el) =>
-            ((el as HTMLButtonElement | HTMLInputElement).disabled = true),
-        );
+      loadingManager.sendMessage({ type: "start", message: "Processing..." });
     },
 
     hideLoadingState() {
-      document.getElementById("loading-spinner")!.classList.add("hidden");
-      document.getElementById("page-overlay")!.classList.add("hidden");
-      document
-        .querySelectorAll("button, input")
-        .forEach(
-          (el) =>
-            ((el as HTMLButtonElement | HTMLInputElement).disabled = false),
-        );
+      loadingManager.sendMessage({ type: "end" });
     },
 
     updateProgressBar(
@@ -189,23 +176,12 @@ function app() {
       totalSize: number,
     ) {
       const percentage = (processedFiles / totalFiles) * 100;
-      const progressBar = document.getElementById(
-        "progress-bar",
-      ) as HTMLElement;
-      const progressText = document.getElementById(
-        "progress-text",
-      ) as HTMLElement;
-      const progressContainer = document.getElementById(
-        "progress-container",
-      ) as HTMLElement;
-
-      progressBar.style.width = `${percentage}%`;
-      progressText.textContent = `Processed ${processedFiles} of ${totalFiles} files (${(
-        compressedSize /
-        1024 /
-        1024
-      ).toFixed(2)} MB / ${(totalSize / 1024 / 1024).toFixed(2)} MB)`;
-      progressContainer.classList.remove("hidden");
+      loadingManager.sendMessage({
+        type: "update",
+        progress: processedFiles,
+        total: totalFiles,
+        message: `Processed ${processedFiles} of ${totalFiles} files (${(compressedSize / 1024 / 1024).toFixed(2)} MB / ${(totalSize / 1024 / 1024).toFixed(2)} MB)`,
+      });
     },
 
     handleZipError(fileName: string, error: Error) {

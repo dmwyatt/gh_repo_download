@@ -1,4 +1,5 @@
 import { FileSystemNodeData, TreeNode } from "./tree/TreeNode";
+import { loadingManager } from "./loading/LoadingManager";
 
 export class FileSystemHelper {
   private fileMap: Map<TreeNode<FileSystemNodeData>, File>;
@@ -9,6 +10,10 @@ export class FileSystemHelper {
     this.fileMap = new Map();
     this.totalFiles = 0;
     this.processedFiles = 0;
+  }
+
+  getFileForNode(node: TreeNode<FileSystemNodeData>): File | undefined {
+    return this.fileMap.get(node);
   }
 
   getFileCount(node: TreeNode<FileSystemNodeData>): number {
@@ -76,6 +81,12 @@ export class FileSystemHelper {
     files: File[],
   ): Promise<TreeNode<FileSystemNodeData>> {
     console.log(`Building tree from ${files.length} files`);
+    loadingManager.sendMessage({
+      type: "start",
+      message: "Processing files...",
+      total: files.length,
+    });
+
     const rootFolderName = files[0].webkitRelativePath.split("/")[0];
     const rootNode = new TreeNode<FileSystemNodeData>(rootFolderName, {
       type: "folder",
@@ -94,7 +105,11 @@ export class FileSystemHelper {
         this.processedFiles % 100 === 0 ||
         this.processedFiles === files.length
       ) {
-        this.emitProgressEvent(this.processedFiles, files.length);
+        loadingManager.sendMessage({
+          type: "update",
+          progress: this.processedFiles,
+          total: files.length,
+        });
         await this.yieldToMain();
       }
 
@@ -121,8 +136,23 @@ export class FileSystemHelper {
 
         currentNode = pathMap.get(path)!;
       }
+
+      // Update progress after processing each file
+      loadingManager.sendMessage({
+        type: "update",
+        progress: i + 1,
+        total: files.length,
+      });
     }
     this.emitProgressEvent(files.length, files.length);
+    // Final progress update
+    loadingManager.sendMessage({
+      type: "update",
+      progress: this.processedFiles,
+      total: files.length,
+    });
+
+    loadingManager.sendMessage({ type: "end" });
     return rootNode;
   }
 

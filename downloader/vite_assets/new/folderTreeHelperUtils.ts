@@ -30,20 +30,6 @@ export function isValidFile(file: File | null): file is File {
   return file !== null;
 }
 
-export function createLoadingElement(): HTMLElement {
-  const loading = document.createElement("div");
-  loading.className = "folder-tree-loading";
-  loading.style.display = "none";
-  loading.innerHTML = `
-      <div class="spinner"></div>
-      <div class="progress-container" style="display: none;">
-        <div class="progress-bar"></div>
-      </div>
-      <p class="loading-message">Selecting folder...</p>
-    `;
-  return loading;
-}
-
 export function getNodePath(node: TreeNode<any>): string {
   const path: string[] = [];
   let currentNode: TreeNode<any> | null = node;
