@@ -95,21 +95,19 @@ export class FolderTreeHelper {
 
   async selectFolder(): Promise<Tree<any> | null> {
     console.log("selectFolder started");
-    this.showLoading("Selecting folder...", true);
     let rootNode: TreeNode<any>;
+
     if ("showDirectoryPicker" in window) {
       try {
         console.log("Using showDirectoryPicker");
         const directoryHandle = await window.showDirectoryPicker();
         console.log("Directory selected, processing files");
-        this.showLoading("Processing files...", true);
         rootNode =
           await this.fileSystemHelper.buildTreeFromDirectoryHandle(
             directoryHandle,
           );
       } catch (err) {
         console.error("Error selecting directory:", err);
-        this.hideLoading();
         return null;
       }
     } else {
@@ -119,11 +117,8 @@ export class FolderTreeHelper {
 
     if (rootNode) {
       console.log("Tree built, rendering");
-      const tree = this.renderTree(rootNode);
-      this.hideLoading();
-      return tree;
+      return this.renderTree(rootNode);
     } else {
-      this.hideLoading();
       return null;
     }
   }

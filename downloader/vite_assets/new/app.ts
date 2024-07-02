@@ -103,12 +103,24 @@ function app() {
     },
 
     async selectFolder() {
-      (
-        document.getElementById("folder-dialog") as HTMLDialogElement
-      ).showModal();
-      const tree = await this.folderTreeHelper!.selectFolder();
-      if (tree) {
-        console.log("Folder selected and tree rendered");
+      try {
+        this.showLoadingState(); // Show the existing loading spinner
+        const tree = await this.folderTreeHelper!.selectFolder();
+        if (tree) {
+          console.log("Folder selected and tree rendered");
+          (
+            document.getElementById("folder-dialog") as HTMLDialogElement
+          ).showModal(); // Show the full dialog
+        } else {
+          console.log("Folder selection cancelled or failed");
+          // Optionally, provide some feedback to the user
+          // this.showNotification("Folder selection was cancelled or failed. Please try again.");
+        }
+      } catch (error) {
+        console.error("Error in folder selection:", error);
+        // Handle any errors
+      } finally {
+        this.hideLoadingState(); // Ensure the loading spinner is hidden
       }
     },
 
