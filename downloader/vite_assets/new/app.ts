@@ -200,7 +200,7 @@ function app() {
       const fileInput = document.createElement("input");
 
       // Set up form
-      form.action = "/";
+      form.action = "/old/";
       form.method = "post";
       form.enctype = "multipart/form-data";
 
