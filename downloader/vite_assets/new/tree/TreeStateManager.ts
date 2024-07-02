@@ -100,4 +100,8 @@ export class TreeStateManager<T> {
       .filter(([, isSelected]) => isSelected === true)
       .map(([node]) => node.name);
   }
+
+  resetSelection() {
+    this.state.selectedItems.clear();
+  }
 }

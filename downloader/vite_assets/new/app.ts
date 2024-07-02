@@ -31,34 +31,7 @@ function app() {
     isProcessing: false,
 
     init() {
-      const selectionValidator = (
-        currentSelection: TreeNode<FileSystemNodeData>[],
-        node: TreeNode<FileSystemNodeData>,
-        isSelecting: boolean,
-      ) => {
-        const nodeFileCount = this.folderTreeHelper!.getFileCount(node);
-        const nodeSize = this.folderTreeHelper!.getTotalSize(node);
-
-        let countAdjustment = isSelecting ? nodeFileCount : -nodeFileCount;
-        let sizeAdjustment = isSelecting ? nodeSize : -nodeSize;
-
-        let projectedCount = this.selectedCount + countAdjustment;
-        let projectedSize = this.selectedSize + sizeAdjustment;
-
-        console.info({
-          projectedCount,
-          projectedSize,
-          countAdjustment,
-          sizeAdjustment,
-          nodeFileCount,
-          nodeSize,
-        });
-
-        return (
-          projectedCount <= this.maxFiles &&
-          projectedSize <= this.maxSizeMB * 1024 * 1024
-        );
-      };
+      const selectionValidator = () => true;
 
       this.folderTreeHelper = new FolderTreeHelper(
         document.getElementById("tree-container")!,
@@ -77,22 +50,44 @@ function app() {
           (size, node) => size + this.folderTreeHelper!.getTotalSize(node),
           0,
         );
-        this.updateSelectionDisplay();
       });
+    },
 
-      document.addEventListener("selectionInvalid", (event: Event) => {
-        const { node, attemptedState } = (
-          event as CustomEvent<SelectionInvalidEventDetail>
-        ).detail;
-        const action = attemptedState ? "select" : "deselect";
-        const nodeType = node.data.type === "folder" ? "folder" : "file";
-        const reason =
-          this.folderTreeHelper!.getFileCount(node) > this.maxFiles
-            ? `exceed the limit of ${this.maxFiles} files`
-            : `exceed the limit of ${this.maxSizeMB} MB`;
+    isSelectionValid(): boolean {
+      return (
+        this.selectedCount > 0 && // Ensure something is selected
+        this.selectedCount <= this.maxFiles &&
+        this.selectedSize <= this.maxSizeMB * 1024 * 1024
+      );
+    },
 
-        alert(`Cannot ${action} this ${nodeType}. It would ${reason}.`);
-      });
+    getFilesProgressPercentage(): number {
+      return Math.min((this.selectedCount / this.maxFiles) * 100, 100);
+    },
+
+    getSizeProgressPercentage(): number {
+      return Math.min(
+        (this.selectedSize / (this.maxSizeMB * 1024 * 1024)) * 100,
+        100,
+      );
+    },
+
+    formatSize(bytes: number): string {
+      return (bytes / (1024 * 1024)).toFixed(2);
+    },
+
+    getLimitExceededMessage(): string {
+      if (
+        this.selectedCount > this.maxFiles &&
+        this.selectedSize > this.maxSizeMB * 1024 * 1024
+      ) {
+        return `Selection exceeds both file count and size limits.`;
+      } else if (this.selectedCount > this.maxFiles) {
+        return `Selection exceeds the ${this.maxFiles} file limit.`;
+      } else if (this.selectedSize > this.maxSizeMB * 1024 * 1024) {
+        return `Selection exceeds the ${this.maxSizeMB} MB size limit.`;
+      }
+      return "";
     },
 
     updateSelectionDisplay() {
@@ -248,7 +243,17 @@ function app() {
       form.submit();
     },
 
+    resetSelectionState() {
+      this.selectedItems = [];
+      this.selectedCount = 0;
+      this.selectedSize = 0;
+      if (this.folderTreeHelper) {
+        this.folderTreeHelper.resetSelection();
+      }
+    },
+
     closeDialog() {
+      this.resetSelectionState();
       (document.getElementById("folder-dialog") as HTMLDialogElement).close();
       document.getElementById("tree-container")!.innerHTML = "";
     },

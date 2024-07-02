@@ -256,4 +256,10 @@ export class FolderTreeHelper {
   getTotalSize(node: TreeNode<FileSystemNodeData>): number {
     return this.fileSystemHelper.getTotalSize(node);
   }
+
+  resetSelection() {
+    if (this.renderer && this.renderer.stateManager) {
+      this.renderer.stateManager.resetSelection();
+    }
+  }
 }
