@@ -1,6 +1,7 @@
 import { TreeNode } from "./TreeNode";
+import { SelectionChangeEventDetail } from "../eventTypes";
+import { SelectionState } from "./treeTypes";
 
-type SelectionState = boolean | "indeterminate";
 export type SelectionValidator<T> = (
   currentSelection: TreeNode<T>[],
   node: TreeNode<T>,
@@ -12,6 +13,8 @@ export class TreeStateManager<T> {
     selectedItems: Map<TreeNode<T>, SelectionState>;
   };
   selectionValidator: SelectionValidator<T>;
+  private selectedCount: number = 0;
+  private indeterminateCount: number = 0;
 
   constructor(selectionValidator: SelectionValidator<T> = () => true) {
     this.state = {
@@ -34,7 +37,15 @@ export class TreeStateManager<T> {
     }
   }
 
-  updateSelection(node: TreeNode<T>, isSelected: boolean): void {
+  updateSelection(node: TreeNode<T>, isSelected: SelectionState): void {
+    const oldState = this.state.selectedItems.get(node);
+
+    // Update counters
+    if (oldState === true) this.selectedCount--;
+    if (oldState === "indeterminate") this.indeterminateCount--;
+    if (isSelected === true) this.selectedCount++;
+    if (isSelected === "indeterminate") this.indeterminateCount++;
+
     this.state.selectedItems.set(node, isSelected);
 
     node.children.forEach((child) => {
@@ -52,10 +63,25 @@ export class TreeStateManager<T> {
       .map(([node]) => node);
   }
 
-  emitSelectionChangedEvent(): void {
-    const event = new CustomEvent("selectionChanged", {
-      detail: { selectedNodes: this.getSelectedNodes() },
-    });
+  getSelectedCount(): number {
+    return this.selectedCount;
+  }
+
+  getIndeterminateCount(): number {
+    return this.indeterminateCount;
+  }
+
+  emitSelectionChangedEvent<U extends T>(): void {
+    const event = new CustomEvent<SelectionChangeEventDetail<U>>(
+      "selectionChanged",
+      {
+        detail: {
+          selectedNodes: this.getSelectedNodes() as TreeNode<U>[],
+          selectedCount: this.selectedCount,
+          indeterminateCount: this.indeterminateCount,
+        },
+      },
+    );
     document.dispatchEvent(event);
   }
 
@@ -83,6 +109,14 @@ export class TreeStateManager<T> {
       newState = false;
     }
 
+    const oldState = this.state.selectedItems.get(node);
+    if (oldState !== newState) {
+      if (oldState === true) this.selectedCount--;
+      if (oldState === "indeterminate") this.indeterminateCount--;
+      if (newState === true) this.selectedCount++;
+      if (newState === "indeterminate") this.indeterminateCount++;
+    }
+
     this.state.selectedItems.set(node, newState);
 
     if (node.checkbox) {
@@ -103,5 +137,7 @@ export class TreeStateManager<T> {
 
   resetSelection() {
     this.state.selectedItems.clear();
+    this.selectedCount = 0;
+    this.indeterminateCount = 0;
   }
 }

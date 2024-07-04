@@ -30,3 +30,5 @@ export interface TreeConfig<T> {
     isSelecting: boolean,
   ) => boolean;
 }
+
+export type SelectionState = boolean | "indeterminate";

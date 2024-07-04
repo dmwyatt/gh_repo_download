@@ -4,6 +4,7 @@ import {
   TreeRenderFunctions,
   TreeEventHandlers,
   SelectionChangeInfo,
+  SelectionState,
 } from "./treeTypes";
 
 export class TreeNodeRenderer<T> {
@@ -59,7 +60,7 @@ export class TreeNodeRenderer<T> {
 
   private setCheckboxState(
     checkbox: HTMLInputElement,
-    state: boolean | "indeterminate" | undefined,
+    state: SelectionState | undefined,
   ): void {
     if (state === "indeterminate") {
       checkbox.indeterminate = true;

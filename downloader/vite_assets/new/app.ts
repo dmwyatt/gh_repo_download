@@ -1,18 +1,15 @@
 import Alpine from "alpinejs";
 
 import { FolderTreeHelper } from "./FolderTreeHelper";
-import { zipFilesAsync, getCookie } from "./utils";
+import { getCookie, zipFilesAsync } from "./utils";
 import { FileSystemNodeData, TreeNode } from "./tree/TreeNode";
 import { loadingManager } from "./loading/LoadingManager";
+import type { SelectionChangeEventDetail } from "./eventTypes";
 
 type FileItem = {
   type: string;
   file?: File;
   handle?: FileSystemFileHandle;
-};
-
-type SelectionChangeEventDetail = {
-  selectedNodes: TreeNode<FileSystemNodeData>[];
 };
 
 type SelectionInvalidEventDetail = {
@@ -39,19 +36,21 @@ function app() {
         selectionValidator,
       );
 
-      document.addEventListener("selectionChanged", (event: Event) => {
-        const { selectedNodes } = (
-          event as CustomEvent<SelectionChangeEventDetail>
-        ).detail;
-        this.selectedCount = selectedNodes.reduce(
-          (count, node) => count + this.folderTreeHelper!.getFileCount(node),
-          0,
-        );
-        this.selectedSize = selectedNodes.reduce(
-          (size, node) => size + this.folderTreeHelper!.getTotalSize(node),
-          0,
-        );
-      });
+      document.addEventListener(
+        "selectionChanged",
+        (
+          event: CustomEvent<SelectionChangeEventDetail<FileSystemNodeData>>,
+        ) => {
+          const { selectedNodes, selectedCount } = event.detail;
+
+          this.selectedCount = selectedCount;
+          this.selectedSize = selectedNodes.reduce(
+            (size: number, node: TreeNode<FileSystemNodeData>) =>
+              size + this.folderTreeHelper!.getTotalSize(node),
+            0,
+          );
+        },
+      );
     },
 
     isSelectionValid(): boolean {
