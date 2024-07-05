@@ -19,9 +19,6 @@ FROM python:3.12-slim-bookworm
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# for uv
-ENV VIRTUAL_ENV /usr/local/
-
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \
     apt-get clean && \
@@ -38,8 +35,8 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh \
     && . $HOME/.cargo/env \
     && cd /code \
     && uv pip compile requirements.in -o requirements.txt \
-    && uv pip sync requirements.txt \
-    && uv pip install gunicorn uvicorn
+    && uv pip install --system -r requirements.txt \
+    && uv pip install --system gunicorn uvicorn
 
 EXPOSE 8000
 
