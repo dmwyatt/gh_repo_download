@@ -1,3 +1,4 @@
+import "vite/modulepreload-polyfill";
 import Alpine from "alpinejs";
 
 import { FolderTreeHelper } from "./FolderTreeHelper";
