@@ -30,7 +30,7 @@ async def download_repo_view(request: HttpRequest) -> HttpResponse:
         elif "zip_file" in request.FILES:
             return await _handle_zip_file_form(request, context)
         else:
-            return redirect("download_repo")
+            return redirect("new_download")
     else:
         error_message = request.session.pop("error_message", None)
         context["error_message"] = error_message
@@ -44,7 +44,7 @@ def _handle_repo_url_form(request: HttpRequest, context):
         return redirect("download_result", username=username, repo_name=repo_name)
     else:
         context["repo_url_form"] = repo_url_form
-        return render(request, "downloader.html", context)
+        return render(request, "downloader_new.html", context)
 
 
 async def _handle_zip_file_form(request: HttpRequest, context):
@@ -76,12 +76,12 @@ async def download_result_view(request, username, repo_name):
         error_message = str(e)
         logger.error(error_message)
         request.session["error_message"] = error_message
-        return redirect("download_repo")
+        return redirect("new_download")
     except RepositoryDownloadError as e:
         error_message = str(e)
         logger.error(error_message)
         request.session["error_message"] = error_message
-        return redirect("download_repo")
+        return redirect("new_download")
 
     # Process the downloaded repository
 
@@ -123,4 +123,5 @@ def _get_extraction_context(
 
 
 def new_downloader_view(request: HttpRequest) -> HttpResponse:
-    return render(request, "downloader_new.html")
+    error_message = request.session.pop("error_message", None)
+    return render(request, "downloader_new.html", {"error_message": error_message})

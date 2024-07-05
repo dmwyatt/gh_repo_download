@@ -1,130 +1,192 @@
-{% load static %}
-{% load django_vite %}
-<!DOCTYPE html>
+{% load static %} {% load django_vite %}
+<!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Text File Consolidator</title>
-        {#  Tailwind v2 is easier to work with for now. Will convert to 3 soon    #}
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
-              rel="stylesheet">
-        {% vite_hmr_client %}
-        {% vite_asset 'downloader/vite_assets/new/app.ts' %}
-        <style>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Text File Consolidator</title>
+    {# Tailwind v2 is easier to work with for now. Will convert to 3 soon #}
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
+      rel="stylesheet"
+    />
+    {% vite_hmr_client %} {% vite_asset 'downloader/vite_assets/new/app.ts' %}
+    <style>
       dialog::backdrop {
-          background-color: rgba(0, 0, 0, 0.5);
+        background-color: rgba(0, 0, 0, 0.5);
       }
-        </style>
-    </head>
-    <body x-data="app"
-          class="bg-gray-100 h-screen flex items-center justify-center">
-        <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-            <h1 class="text-2xl font-bold mb-2 text-center">Text File Consolidation</h1>
-            <p class="text-gray-600 text-center mb-6">
-                Combine all plain text files from a GitHub repo or local folder into one file.
-            </p>
-            <form action="/old/" method="POST" id="github-url-form">
-                <div class="mb-6">
-                    <label for="repo_url" class="block text-sm font-medium text-gray-700 mb-2">GitHub Repository URL</label>
-                    <div class="flex">
-                      {% csrf_token %}
-                        <input type="url"
-                               id="repo_url"
-                               name="repo_url"
-                               placeholder="https://github.com/username/repo"
-                               pattern="https:\/\/github\.com\/[a-zA-Z0-9\-]+\/[a-zA-Z0-9\-]+"
-                               title="Please enter a valid GitHub repository URL in the format: https://github.com/user/repo"
-                               required
-                               class="flex-grow px-3 py-2 border border-r-0 border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <button type="submit"
-                                class="bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                            Submit
-                        </button>
-                    </div>
-                </div>
-            </form>
-            <div class="relative py-4">
-                <div class="absolute inset-0 flex items-center">
-                    <div class="w-full border-t border-gray-300"></div>
-                </div>
-                <div class="relative flex justify-center">
-                    <span class="bg-white px-4 text-sm text-gray-500">OR</span>
-                </div>
-            </div>
-            <div class="mb-6">
-                <button type="button"
-                        @click="selectFolder()"
-                        class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    Select Local Folder
-                </button>
-            </div>
+    </style>
+  </head>
+  <body
+    x-data="app"
+    class="bg-gray-100 h-screen flex items-center justify-center"
+  >
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+      {% if error_message %}
+        <div class="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
+          {{ error_message }}
         </div>
-        <dialog id="folder-dialog"
-                class="w-11/12 max-w-2xl p-6 rounded-lg border-none">
-            <h2 class="text-xl font-bold mb-4">Folder Structure</h2>
-            <div id="tree-container" class="h-96 overflow-y-auto"></div>
-            <div id="selection-indicator"
-                 x-show="folderTreeHelper"
-                 class="mt-4 p-4 bg-gray-100 rounded-md">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="font-semibold">Selected Files:</span>
-                    <span x-text="`${selectedCount} / ${maxFiles}`"></span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                    <div :class="{'bg-blue-600': isSelectionValid(), 'bg-red-600': !isSelectionValid()}"
-                         class="h-2.5 rounded-full"
-                         :style="`width: ${getFilesProgressPercentage()}%`"></div>
-                </div>
-                <div class="flex justify-between items-center mt-4 mb-2">
-                    <span class="font-semibold">Total Size:</span>
-                    <span x-text="`${formatSize(selectedSize)} MB / ${maxSizeMB} MB`"></span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                    <div :class="{'bg-green-600': isSelectionValid(), 'bg-red-600': !isSelectionValid()}"
-                         class="h-2.5 rounded-full"
-                         :style="`width: ${getSizeProgressPercentage()}%`"></div>
-                </div>
-                <div class="min-h-[2.5rem] mt-4">
-                    <!-- Adjust min-height as needed -->
-                    <div x-show="!isSelectionValid() && selectedCount > 0"
-                         x-transition:enter="transition ease-out duration-300"
-                         x-transition:enter-start="opacity-0 transform -translate-y-2"
-                         x-transition:enter-end="opacity-100 transform translate-y-0"
-                         x-transition:leave="transition ease-in duration-200"
-                         x-transition:leave-start="opacity-100 transform translate-y-0"
-                         x-transition:leave-end="opacity-0 transform -translate-y-2"
-                         class="p-2 bg-red-100 text-red-700 rounded text-sm">
-                        <span x-text="getLimitExceededMessage()"></span>
-                    </div>
-                </div>
+      {% endif %}
+      <h1 class="text-2xl font-bold mb-2 text-center">
+        Text File Consolidation
+      </h1>
+      <p class="text-gray-600 text-center mb-6">
+        Combine all plain text files from a GitHub repo or local folder into one
+        file.
+      </p>
+      <form action="/old/" method="POST" id="github-url-form">
+        <div class="mb-6">
+          <label
+            for="repo_url"
+            class="block text-sm font-medium text-gray-700 mb-2"
+            >GitHub Repository URL</label
+          >
+          <div class="flex">
+            {% csrf_token %}
+            <input
+              type="url"
+              id="repo_url"
+              name="repo_url"
+              placeholder="https://github.com/username/repo"
+              pattern="https:\/\/github\.com\/[a-zA-Z0-9_\-\.]+\/[a-zA-Z0-9_\-\.]+"
+              title="Please enter a valid GitHub repository URL in the format: https://github.com/user/repo"
+              required
+              class="flex-grow px-3 py-2 border border-r-0 border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              type="submit"
+              id="submit-github-url"
+              class="bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              Submit
+            </button>
+          </div>
+          {% if repo_url_form.repo_url.errors %}
+            <div class="error-message" data-test-id="repo-url-server-errors">
+              <ul class="mt-2 text-sm text-red-600 list-none pl-0">
+                {% for error in repo_url_form.repo_url.errors %}
+                  <li>{{ error }}</li>
+                {% endfor %}
+              </ul>
             </div>
-            <div class="mt-4 flex justify-end">
-                <button @click="closeDialog()"
-                        class="bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 mr-2">
-                    Cancel
-                </button>
-                <button @click="confirmAndUploadFiles()"
-                        :disabled="!isSelectionValid()"
-                        :class="{ 'bg-blue-500 hover:bg-blue-600 cursor-pointer': isSelectionValid(), 'bg-gray-400 cursor-not-allowed': !isSelectionValid() }"
-                        class="text-white px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    Confirm and Upload
-                </button>
-            </div>
-        </dialog>
-        <!-- Page overlay -->
-        <div id="page-overlay"
-             class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden"></div>
-        <!-- Loading indicator -->
-        <div id="loading-indicator"
-             class="fixed inset-0 flex items-center justify-center bg-white bg-opacity-75 z-50 hidden">
-            <div class="text-center">
-                <div class="spinner animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-                <div class="progress-container hidden w-full max-w-md mt-4">
-                    <div class="progress-bar h-2 bg-blue-500 rounded-full w-0"></div>
-                </div>
-                <p class="loading-message mt-2 text-gray-600"></p>
-            </div>
+          {% endif %}
         </div>
-    </body>
+        {% if repo_url_form.non_field_errors %}
+          <div class="error-message" data-test-id="repo-url-non-field-errors">
+            <ul class="mt-2 text-sm text-red-600 list-none pl-0">
+              {% for error in repo_url_form.non_field_errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+      </form>
+      <div class="relative py-4">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-gray-300"></div>
+        </div>
+        <div class="relative flex justify-center">
+          <span class="bg-white px-4 text-sm text-gray-500">OR</span>
+        </div>
+      </div>
+      <div class="mb-6">
+        <button
+          type="button"
+          @click="selectFolder()"
+          class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          Select Local Folder
+        </button>
+      </div>
+    </div>
+    <dialog
+      id="folder-dialog"
+      class="w-11/12 max-w-2xl p-6 rounded-lg border-none"
+    >
+      <h2 class="text-xl font-bold mb-4">Folder Structure</h2>
+      <div id="tree-container" class="h-96 overflow-y-auto"></div>
+      <div
+        id="selection-indicator"
+        x-show="folderTreeHelper"
+        class="mt-4 p-4 bg-gray-100 rounded-md"
+      >
+        <div class="flex justify-between items-center mb-2">
+          <span class="font-semibold">Selected Files:</span>
+          <span x-text="`${selectedCount} / ${maxFiles}`"></span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+          <div
+            :class="{'bg-blue-600': isSelectionValid(), 'bg-red-600': !isSelectionValid()}"
+            class="h-2.5 rounded-full"
+            :style="`width: ${getFilesProgressPercentage()}%`"
+          ></div>
+        </div>
+        <div class="flex justify-between items-center mt-4 mb-2">
+          <span class="font-semibold">Total Size:</span>
+          <span
+            x-text="`${formatSize(selectedSize)} MB / ${maxSizeMB} MB`"
+          ></span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+          <div
+            :class="{'bg-green-600': isSelectionValid(), 'bg-red-600': !isSelectionValid()}"
+            class="h-2.5 rounded-full"
+            :style="`width: ${getSizeProgressPercentage()}%`"
+          ></div>
+        </div>
+        <div class="min-h-[2.5rem] mt-4">
+          <!-- Adjust min-height as needed -->
+          <!--suppress XmlUnboundNsPrefix -->
+          <div
+            x-show="!isSelectionValid() && selectedCount > 0"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 transform -translate-y-2"
+            x-transition:enter-end="opacity-100 transform translate-y-0"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100 transform translate-y-0"
+            x-transition:leave-end="opacity-0 transform -translate-y-2"
+            class="p-2 bg-red-100 text-red-700 rounded text-sm"
+          >
+            <span x-text="getLimitExceededMessage()"></span>
+          </div>
+        </div>
+      </div>
+      <div class="mt-4 flex justify-end">
+        <button
+          @click="closeDialog()"
+          class="bg-gray-300 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 mr-2"
+        >
+          Cancel
+        </button>
+        <button
+          @click="confirmAndUploadFiles()"
+          :disabled="!isSelectionValid()"
+          :class="{ 'bg-blue-500 hover:bg-blue-600 cursor-pointer': isSelectionValid(), 'bg-gray-400 cursor-not-allowed': !isSelectionValid() }"
+          class="text-white px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          Confirm and Upload
+        </button>
+      </div>
+    </dialog>
+    <!-- Page overlay -->
+    <div
+      id="page-overlay"
+      class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden"
+    ></div>
+    <!-- Loading indicator -->
+    <div
+      id="loading-indicator"
+      class="fixed inset-0 flex items-center justify-center bg-white bg-opacity-75 z-50 hidden"
+    >
+      <div class="text-center">
+        <div
+          class="spinner animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"
+        ></div>
+        <div class="progress-container hidden w-full max-w-md mt-4">
+          <div class="progress-bar h-2 bg-blue-500 rounded-full w-0"></div>
+        </div>
+        <p class="loading-message mt-2 text-gray-600"></p>
+      </div>
+    </div>
+  </body>
 </html>
