@@ -19,8 +19,25 @@
   "devDependencies": {
     "@types/alpinejs": "^3.13.10",
     "@types/wicg-file-system-access": "^2023.10.5",
+    "prettier": "^3.3.2",
+    "prettier-plugin-jinja-template": "^1.4.1",
     "typescript": "^5.5.2",
     "vite-plugin-top-level-await": "^1.4.1",
     "vite-plugin-wasm": "^3.3.0"
+  },
+  "prettier": {
+    "plugins": [
+      "prettier-plugin-jinja-template"
+    ],
+    "overrides": [
+      {
+        "files": [
+          "*.html"
+        ],
+        "options": {
+          "parser": "jinja-template"
+        }
+      }
+    ]
   }
 }
