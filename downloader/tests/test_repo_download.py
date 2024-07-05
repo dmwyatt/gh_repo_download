@@ -63,7 +63,7 @@ async def test_invalid_repository_url(async_client):
     assert response.status_code == 200
 
     # Check that the response contains the form page template
-    assert "downloader.html" in [t.name for t in response.templates]
+    assert "downloader_new.html" in [t.name for t in response.templates]
 
     # Check that the error message is displayed on the form page
     assert "error_message" in response.context

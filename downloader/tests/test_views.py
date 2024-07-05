@@ -95,7 +95,7 @@ async def test_download_result_view_repo_size_exceeded(mock_download_repo):
     response = await async_client.get(url)
 
     assert response.status_code == 302
-    assert response.url == reverse("download_repo")
+    assert response.url == reverse("new_download")
 
     session = SessionStore(response.cookies["sessionid"].value)
     assert "error_message" in session
@@ -116,7 +116,7 @@ async def test_download_result_view_repo_download_error(mock_download_repo):
     response = await async_client.get(url)
 
     assert response.status_code == 302
-    assert response.url == reverse("download_repo")
+    assert response.url == reverse("new_download")
 
     session = SessionStore(response.cookies["sessionid"].value)
     assert "error_message" in session

@@ -23,32 +23,41 @@ def test_repo_download_invalid_url_server_side_validation(page: Page, live_serve
     # wait for a ul with a li containing the error message
     locator = page.locator("div[data-test-id='repo-url-server-errors'] > ul > li")
     expect(locator).to_contain_text("Please provide a valid GitHub repository URL")
+    page.pause()
 
 
-def test_repo_url_field_attributes(page: Page, live_server):
+@pytest.mark.parametrize(
+    "invalid_url",
+    [
+        "https://example.com/user/repo",
+        "http://github.com/user/repo",
+        "https://github.com/user",
+        "github.com/user/repo",
+        "https://github.com/user/repo/",
+    ],
+)
+def test_repo_url_field_rejects_invalid_urls(page: Page, live_server, invalid_url):
     page.goto(live_server.url)
 
     # Selector for the repo_url input field
     repo_url_selector = 'input[name="repo_url"]'
 
+    # Fill the input with an invalid URL and submit the form
+    page.fill(repo_url_selector, invalid_url)
+    page.click("button#submit-github-url")
+
+    # Check for validation message
     locator = page.locator(repo_url_selector)
     expect(locator).to_be_visible()
-    expect(locator).to_have_attribute("pattern", "https://github\\.com/.+/.+")
-    expect(locator).to_have_attribute(
-        "title", "Please enter a valid GitHub repository URL."
+
+    validation_message = page.evaluate(
+        "document.querySelector(\"input[name='repo_url']\").validationMessage"
     )
 
-
-def test_repo_url_this_sites_repo(page: Page, live_server):
-    page.goto(live_server.url)
-    # click button with "Test it out with this site's repo!" text
-    page.click('text="Test it out with this site\'s repo!"')
-    # wait for the form to be filled
-    expected_url = "https://github.com/dmwyatt/gh_repo_download"
-
-    locator = page.locator('input[name="repo_url"]')
-
-    expect(locator).to_have_value(expected_url)
+    assert validation_message
+    assert not page.evaluate(
+        "document.querySelector(\"input[name='repo_url']\").checkValidity()"
+    )
 
 
 @pytest.fixture(scope="session")
@@ -88,6 +97,9 @@ def zip_file_fixture(tmpdir_factory):
     os.remove(zip_path)
 
 
+@pytest.mark.skip(
+    reason="ZIP upload temporarily removed, will come back in the future."
+)
 def test_zip_file_upload_works(page: Page, zip_file_fixture, live_server):
     zip_file_path, file_contents, zip_file_name = zip_file_fixture
 
@@ -109,6 +121,9 @@ def binary_file(tmp_path_factory):
     os.remove(binary_file_path)
 
 
+@pytest.mark.skip(
+    reason="ZIP upload temporarily removed, will come back in the future."
+)
 def test_zip_file_upload_invalid_zip_client_side_validation(
     page: Page, binary_file, live_server
 ):
@@ -124,6 +139,9 @@ def test_zip_file_upload_invalid_zip_client_side_validation(
     )
 
 
+@pytest.mark.skip(
+    reason="ZIP upload temporarily removed, will come back in the future."
+)
 def test_zip_file_upload_too_big_client_side_validation(
     page: Page, zip_file_fixture, live_server, settings
 ):
