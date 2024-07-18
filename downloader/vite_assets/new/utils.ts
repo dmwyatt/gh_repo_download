@@ -91,6 +91,27 @@ export function zipFilesAsync(
       }
     });
 
+    const usedPaths = new Set<string>();
+
+    function getUniquePath(basePath: string): string {
+      if (!usedPaths.has(basePath)) {
+        usedPaths.add(basePath);
+        return basePath;
+      }
+      let counter = 1;
+      let newPath = basePath;
+      const extension = basePath.includes(".") ? basePath.split(".").pop() : "";
+      const nameWithoutExtension = basePath.includes(".")
+        ? basePath.slice(0, basePath.lastIndexOf("."))
+        : basePath;
+      while (usedPaths.has(newPath)) {
+        newPath = `${nameWithoutExtension}_${counter}${extension ? "." + extension : ""}`;
+        counter++;
+      }
+      usedPaths.add(newPath);
+      return newPath;
+    }
+
     function processNextFile(index: number) {
       if (index >= files.length) {
         zipStream.end();
@@ -103,7 +124,12 @@ export function zipFilesAsync(
           totalSize += fileData.length;
           processedFiles++;
 
-          const zipObject = new ZipPassThrough(file.name);
+          // Use webkitRelativePath if available, otherwise fall back to name.
+          // This means non-webkit browsers only get the filename...
+          const baseFilePath = file.webkitRelativePath || file.name;
+          const uniqueFilePath = getUniquePath(baseFilePath);
+
+          const zipObject = new ZipPassThrough(uniqueFilePath);
           zipStream.add(zipObject);
           zipObject.push(fileData, true);
 
