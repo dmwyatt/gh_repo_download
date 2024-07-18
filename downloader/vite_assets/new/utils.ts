@@ -34,19 +34,22 @@ type ZipFilesAsyncReturn = {
 };
 
 /**
- * Asynchronously compresses an array of files into a ZIP archive using a streaming approach.
+ * Asynchronously zips an array of files into a single zip file.
  *
- * @param files - An array of File objects to be compressed.
- * @param [progressCallback] - Optional callback for progress updates.
- *        Called with the number of processed files, total number of files, current compressed size, and total uncompressed size.
- * @param [errorCallback] - Optional callback for individual file errors.
- *        Called with the name of the file that encountered an error and the error object.
- * @param [abortOnError=false] - If true, the entire process will abort on the first error encountered.
- *        If false, it will continue processing other files after an error.
- * @returns A promise that resolves with an object containing:
- *          - zipBuffer: The compressed ZIP file as a Uint8Array.
- *          - errors: An array of objects describing any errors encountered, each containing the file name and error message.
- * @throws If abortOnError is true and an error is encountered, or if there's an error in the ZIP stream itself.
+ * @param files - The array of File objects to be zipped.
+ * @param progressCallback - An optional callback function that receives progress updates during zipping.
+ *                          It should have the following signature:
+ *                          (processedFiles: number, totalFiles: number, compressedSize: number, totalSize: number) => void
+ * @param errorCallback - An optional callback function that handles errors that occur during zipping.
+ *                       It should have the following signature:
+ *                       (fileName: string, error: Error) => void
+ * @param abortOnError - A boolean indicating whether to stop zipping if an error occurs while processing a file.
+ * @returns A promise that resolves with an object containing the zipped file contents as a Uint8Array and any errors encountered.
+ *          The resolved object has the following structure:
+ *          {
+ *            zipBuffer: Uint8Array, // The zipped file contents
+ *            errors: FileError[]    // An array of objects containing file-specific errors
+ *          }
  */
 export function zipFilesAsync(
   files: File[],
