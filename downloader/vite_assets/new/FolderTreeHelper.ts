@@ -54,27 +54,29 @@ export class FolderTreeHelper {
     console.log("selectFolder started");
     let rootNode: TreeNode<any>;
 
-    if ("showDirectoryPicker" in window) {
-      try {
-        console.log("Using showDirectoryPicker");
-        loadingManager.sendMessage({
-          type: "start",
-          message: "Selecting directory...",
-        });
+    try {
+      loadingManager.sendMessage({
+        type: "start",
+        message: "Selecting directory...",
+      });
+
+      if ("webkitdirectory" in HTMLInputElement.prototype) {
+        console.log("Using webkitdirectory input");
+        rootNode = await this.useWebkitDirectoryInput();
+      } else if ("showDirectoryPicker" in window) {
+        console.log("Using File System Access API");
         const directoryHandle = await window.showDirectoryPicker();
-        console.log("Directory selected, processing files");
         rootNode =
           await this.fileSystemHelper.buildTreeFromDirectoryHandle(
             directoryHandle,
           );
-      } catch (err) {
-        console.error("Error selecting directory:", err);
-        loadingManager.sendMessage({ type: "end" });
-        return null;
+      } else {
+        throw new Error("Folder selection not supported in this browser");
       }
-    } else {
-      console.log("Falling back to file input");
-      rootNode = await this.fallbackToFileInput();
+    } catch (err) {
+      console.error("Error selecting directory:", err);
+      loadingManager.sendMessage({ type: "end" });
+      return null;
     }
 
     if (rootNode) {
@@ -85,6 +87,32 @@ export class FolderTreeHelper {
       loadingManager.sendMessage({ type: "end" });
       return null;
     }
+  }
+
+  private useWebkitDirectoryInput(): Promise<TreeNode<any>> {
+    return new Promise((resolve) => {
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.webkitdirectory = true;
+      fileInput.multiple = true;
+
+      fileInput.onchange = async (event: Event) => {
+        const files = (event.target as HTMLInputElement).files;
+        if (files && files.length > 0) {
+          console.log(`${files.length} files selected`);
+          const rootNode = await this.fileSystemHelper.buildTreeFromFiles(
+            Array.from(files),
+          );
+          resolve(rootNode);
+        } else {
+          console.log("No files selected");
+          resolve(null as any);
+        }
+      };
+
+      console.log("Opening file input dialog");
+      fileInput.click();
+    });
   }
 
   private async fallbackToFileInput(): Promise<TreeNode<any>> {
