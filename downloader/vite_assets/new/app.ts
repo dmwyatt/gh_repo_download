@@ -25,8 +25,8 @@ function app() {
     folderTreeHelper: null as FolderTreeHelper | null,
     selectedCount: 0,
     selectedSize: 0,
-    maxFiles: 200,
-    maxSizeMB: 500,
+    maxFiles: 2000,
+    maxSizeMB: 25,
     isProcessing: false,
 
     init() {
