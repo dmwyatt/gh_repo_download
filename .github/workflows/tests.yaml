@@ -17,38 +17,27 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: 3.12
-
     - name: Set up Node
       uses: actions/setup-node@v4
       with:
           node-version: 20
 
     - name: Install uv
-      run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        . $HOME/.cargo/env
-        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
-    - name: Compile dependencies
-      run: |
-        uv pip compile requirements.in dev-requirements.in -o requirements.txt
+      uses: astral-sh/setup-uv@v10.3.2
+      with:
+        version: "0.13.5"
 
     - name: Install dependencies
       run: |
-        uv pip install --python=$(which python3) -r requirements.txt
+        uv sync --locked
         npm ci
-        npm run build
-        python -m playwright install --with-deps chromium
+        uv run playwright install --with-deps chromium
 
     - name: Run tests
       run: |
         npm run build
-        python manage.py collectstatic --noinput
-        pytest
+        uv run python manage.py collectstatic --noinput
+        uv run pytest
 
     - uses: actions/upload-artifact@v4
       if: always()

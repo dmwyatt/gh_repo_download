@@ -1,5 +1,0 @@
-Django
-django-environ
-django-vite
-httpx
-whitenoise[brotli]

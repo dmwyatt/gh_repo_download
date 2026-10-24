@@ -4,7 +4,7 @@ FROM node:20 AS node-build
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 COPY . .
 
@@ -15,28 +15,25 @@ RUN npm run build
 # Stage 2: Final stage
 FROM python:3.12-slim-bookworm
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+COPY --from=ghcr.io/astral-sh/uv:0.13.5 /uv /uvx /bin/
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    UV_PYTHON_DOWNLOADS=never \
+    PATH="/code/.venv/bin:$PATH"
 
 WORKDIR /code
+
+# Install dependencies before copying the source so this layer stays cached
+# until pyproject.toml or uv.lock changes.
+COPY pyproject.toml uv.lock .python-version /code/
+RUN uv sync --locked --no-dev
 
 COPY . /code/
 
 # Copy the built files from the node-build stage
 COPY --from=node-build /app/downloader/vite_assets_dist/ /code/downloader/vite_assets_dist/
-
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh \
-    && . $HOME/.cargo/env \
-    && cd /code \
-    && uv pip compile requirements.in -o requirements.txt \
-    && uv pip install --system -r requirements.txt \
-    && uv pip install --system gunicorn uvicorn
 
 EXPOSE 8000
 

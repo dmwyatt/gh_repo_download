@@ -123,7 +123,8 @@ development:
 
 #### Prerequisites
 
-- Python 3.12 or later
+- [uv](https://docs.astral.sh/uv/getting-started/installation/), which installs the Python
+  version pinned in `.python-version`
 - Node.js 20 or later
 
 #### Fork and Clone the Repository
@@ -136,39 +137,27 @@ development:
 
 #### Install Dependencies
 
-For managing Python dependencies, you can choose between `uv` and `pip-tools`. `uv` is
-much faster for installing dependencies, but you may be more comfortable with `pip-tools`.
-`uv` installation instructions [here](https://github.com/astral-sh/uv#getting-started).
-
-**Use a virtualenv!**
-
-Select the one that best fits your workflow:
-
-- **Using `uv`:**
-
-  - Install `uv` if you haven't already.
-  - Compile and sync dependencies:
-    ```bash
-    uv pip compile requirements.in dev-requirements.in -o requirements.txt
-    uv pip sync requirements.txt
-    ```
-
-- **Using `pip-tools`:**
-
-  - Install `pip-tools`:
-    ```bash
-    python3 -m pip install pip-tools
-    ```
-  - Compile and sync dependencies:
-    ```bash
-    pip-compile requirements.in dev-requirements.in -o requirements.txt
-    pip-sync requirements.txt
-    ```
-
-For Node.js dependencies:
+Python dependencies are declared in `pyproject.toml` and pinned to exact versions in
+`uv.lock`. Install them, including the dev group, into `.venv`:
 
 ```bash
-npm install
+uv sync
+```
+
+To add a dependency, use `uv add <package>` (or `uv add --dev <package>`). To upgrade, use
+`uv lock --upgrade-package <package>` or `uv lock --upgrade` for everything. Either way,
+commit the updated `uv.lock`.
+
+Node.js dependencies are pinned in `package-lock.json`:
+
+```bash
+npm ci
+```
+
+The browser tests need Playwright's Chromium:
+
+```bash
+uv run playwright install chromium
 ```
 
 ### Step 2: Run the local server(s)
@@ -178,7 +167,7 @@ npm install
 1. **Run the Server:**
 
    ```bash
-    python manage.py runserver
+    uv run python manage.py runserver
    ```
 
 #### Vite

@@ -1,0 +1,24 @@
+[project]
+name = "gh-repo-download"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "django>=6.1.2",
+    "django-environ>=0.14.0",
+    "django-vite>=3.2.0",
+    "gunicorn>=26.2.0",
+    "httpx>=0.28.1",
+    "uvicorn>=0.54.0",
+    "whitenoise[brotli]>=6.12.0",
+]
+
+[dependency-groups]
+dev = [
+    "django-debug-toolbar>=8.0.0",
+    "mdformat-gfm>=1.0.0",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "pytest-django>=4.14.0",
+    "pytest-httpx>=0.36.2",
+    "pytest-playwright-asyncio>=0.10.0",
+]

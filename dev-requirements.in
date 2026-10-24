@@ -1,7 +1,0 @@
-django-debug-toolbar
-mdformat-gfm
-pytest
-pytest-asyncio
-pytest-django
-pytest-httpx
-pytest-playwright-asyncio
