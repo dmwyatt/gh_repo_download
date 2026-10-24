@@ -1,22 +1,11 @@
-import os
-
-import nest_asyncio
 import pytest
 from django.core.management import call_command
 from django.test import override_settings
-
-os.environ.setdefault("DJANGO_ALLOW_ASYNC_UNSAFE", "true")
-
-from playwright.sync_api import expect
+from playwright.async_api import expect
 
 timeout = 6_000
 
 expect.set_options(timeout=timeout)
-
-
-def pytest_configure():
-    # https://github.com/microsoft/playwright-pytest/issues/167#issuecomment-1546854047
-    nest_asyncio.apply()
 
 
 @pytest.fixture
