@@ -5,27 +5,33 @@ import uuid
 from pathlib import Path
 
 import pytest
-from playwright.sync_api import Page, expect
+from playwright.async_api import Page, expect
 
 
-def test_repo_download_invalid_url_server_side_validation(page: Page, live_server):
-    page.goto(live_server.url)
+@pytest.mark.asyncio
+async def test_repo_download_invalid_url_server_side_validation(
+    page: Page, live_server
+):
+    await page.goto(live_server.url)
 
     # Remove the pattern attribute from the input field
-    page.evaluate(
+    await page.evaluate(
         "document.querySelector('input[name=\"repo_url\"]').removeAttribute('pattern');"
     )
-    page.fill('input[name="repo_url"]', "https://not-a-real-url.com")
+    await page.fill('input[name="repo_url"]', "https://not-a-real-url.com")
 
     # Press Enter to submit the form
-    page.press('input[name="repo_url"]', "Enter")
+    await page.press('input[name="repo_url"]', "Enter")
 
     # wait for a ul with a li containing the error message
     locator = page.locator("div[data-test-id='repo-url-server-errors'] > ul > li")
-    expect(locator).to_contain_text("Please provide a valid GitHub repository URL")
-    page.pause()
+    await expect(locator).to_contain_text(
+        "Please provide a valid GitHub repository URL"
+    )
+    await page.pause()
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "invalid_url",
     [
@@ -36,26 +42,28 @@ def test_repo_download_invalid_url_server_side_validation(page: Page, live_serve
         "https://github.com/user/repo/",
     ],
 )
-def test_repo_url_field_rejects_invalid_urls(page: Page, live_server, invalid_url):
-    page.goto(live_server.url)
+async def test_repo_url_field_rejects_invalid_urls(
+    page: Page, live_server, invalid_url
+):
+    await page.goto(live_server.url)
 
     # Selector for the repo_url input field
     repo_url_selector = 'input[name="repo_url"]'
 
     # Fill the input with an invalid URL and submit the form
-    page.fill(repo_url_selector, invalid_url)
-    page.click("button#submit-github-url")
+    await page.fill(repo_url_selector, invalid_url)
+    await page.click("button#submit-github-url")
 
     # Check for validation message
     locator = page.locator(repo_url_selector)
-    expect(locator).to_be_visible()
+    await expect(locator).to_be_visible()
 
-    validation_message = page.evaluate(
+    validation_message = await page.evaluate(
         "document.querySelector(\"input[name='repo_url']\").validationMessage"
     )
 
     assert validation_message
-    assert not page.evaluate(
+    assert not await page.evaluate(
         "document.querySelector(\"input[name='repo_url']\").checkValidity()"
     )
 
@@ -97,19 +105,20 @@ def zip_file_fixture(tmpdir_factory):
     os.remove(zip_path)
 
 
+@pytest.mark.asyncio
 @pytest.mark.skip(
     reason="ZIP upload temporarily removed, will come back in the future."
 )
-def test_zip_file_upload_works(page: Page, zip_file_fixture, live_server):
+async def test_zip_file_upload_works(page: Page, zip_file_fixture, live_server):
     zip_file_path, file_contents, zip_file_name = zip_file_fixture
 
-    page.goto(live_server.url)
+    await page.goto(live_server.url)
     file_input = page.locator('input[name="zip_file"]')
 
-    file_input.set_input_files(zip_file_path)
+    await file_input.set_input_files(zip_file_path)
 
-    page.click('button[data-test-id="zip-file-submit"]')
-    expect(page).to_have_title(f"Download - {zip_file_name}")
+    await page.click('button[data-test-id="zip-file-submit"]')
+    await expect(page).to_have_title(f"Download - {zip_file_name}")
 
 
 @pytest.fixture(scope="session")
@@ -121,68 +130,71 @@ def binary_file(tmp_path_factory):
     os.remove(binary_file_path)
 
 
+@pytest.mark.asyncio
 @pytest.mark.skip(
     reason="ZIP upload temporarily removed, will come back in the future."
 )
-def test_zip_file_upload_invalid_zip_client_side_validation(
+async def test_zip_file_upload_invalid_zip_client_side_validation(
     page: Page, binary_file, live_server
 ):
-    page.goto(live_server.url)
+    await page.goto(live_server.url)
 
     file_input = page.locator('input[name="zip_file"]')
 
-    file_input.set_input_files(binary_file)
+    await file_input.set_input_files(binary_file)
 
     error_locator = page.locator("div#zipFileError")
-    expect(error_locator).to_have_text(
+    await expect(error_locator).to_have_text(
         "This file does not appear to be a valid ZIP file."
     )
 
 
+@pytest.mark.asyncio
 @pytest.mark.skip(
     reason="ZIP upload temporarily removed, will come back in the future."
 )
-def test_zip_file_upload_too_big_client_side_validation(
+async def test_zip_file_upload_too_big_client_side_validation(
     page: Page, zip_file_fixture, live_server, settings
 ):
     settings.MAX_REPO_SIZE = 1  # 1 byte!
-    page.goto(live_server.url)
+    await page.goto(live_server.url)
     zip_file_path, file_contents, zip_file_name = zip_file_fixture
     file_input = page.locator('input[name="zip_file"]')
-    file_input.set_input_files(zip_file_path)
+    await file_input.set_input_files(zip_file_path)
     error_locator = page.locator("div#zipFileError")
-    expect(error_locator).to_have_text("This file is too large to process here.")
+    await expect(error_locator).to_have_text("This file is too large to process here.")
 
 
-# def test_zip_file_upload_too_big_server_side_validation(
+# async def test_zip_file_upload_too_big_server_side_validation(
 #     page: Page, zip_file_fixture, live_server, settings
 # ):
 #     settings.MAX_REPO_SIZE = 1  # 1 byte!
-#     page.goto(live_server.url)
+#     await page.goto(live_server.url)
 #     zip_file_path, file_contents, zip_file_name = zip_file_fixture
 #     file_input = page.locator('input[name="zip_file"]')
-#     file_input.set_input_files(zip_file_path)
-#     page.click('button[data-test-id="zip-file-submit"]')
-#     page.pause()
+#     await file_input.set_input_files(zip_file_path)
+#     await page.click('button[data-test-id="zip-file-submit"]')
+#     await page.pause()
 
 
+@pytest.mark.asyncio
 @pytest.mark.skip(reason="This test is for testing test environment configuration.")
-def test_static_file_access(page: Page, live_server):
+async def test_static_file_access(page: Page, live_server):
     """
     Add the following element somewhere to `downloader.html` or whatever the
     template served at / is.
 
     <img src="{% static 'downloader/dummy.txt' %}" alt="Dummy File">
     """
-    page.goto(live_server.url)
+    await page.goto(live_server.url)
 
     # Get the static file URL
-    static_file_url = page.evaluate(
+    static_file_url = await page.evaluate(
         "document.querySelector('img[src$=\"static/downloader/dummy.txt\"]').src"
     )
 
     # Navigate to the static file URL
-    response = page.goto(static_file_url)
+    response = await page.goto(static_file_url)
 
     # Check the status of the static file response
     assert response.status in [
